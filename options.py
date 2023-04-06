@@ -1,8 +1,12 @@
-import argparse
+import argparse, os
 
 
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
+
+parser.add_argument("source", help="source file or directory")
+parser.add_argument("destination", help="destination file or directory")
+
 
 # options to display or hide program output
 # verbose is a counter, so -v is verbose, -vv is more verbose, etc.
@@ -27,7 +31,6 @@ parser.add_argument("--timeout", help="set I/O timeout in seconds", type=int)
 parser.add_argument("--blocking-io", help="use blocking I/O for the remote shell", action="store_true")
 parser.add_argument("-I", "--ignore-times", help="don't skip files that match in size and time", action="store_true")
 parser.add_argument("--size-only", help="skip files that match in size", action="store_true")
-parser.add_argument("--port", help="specify double-colon alternate port number", type=str)
 parser.add_argument("--list-only", help="list the files instead of copying them", action="store_true")
 
 
@@ -35,13 +38,20 @@ parser.add_argument("--list-only", help="list the files instead of copying them"
 parser.add_argument("--daemon", help="run as an mrsync daemon", action="store_true")
 parser.add_argument("--address", help="bind to the specified address", type=str)
 parser.add_argument("--no-detach", help="do not detach from the parent", action="store_true")
-parser.add_argument("--port=PORT", help="listen on alternate port number", action="store_true")
+parser.add_argument("--port", help="listen on alternate port number", type=str)
 
 def parsing():
    return parser.parse_args()
+
+"""part of code that will implement list-only option
+if os.fork() == 0: os.execvp("ls", ["ls", "-l"])
+
+
+"""
+
 
 # verify that it works
 if __name__ == "__main__":
    args = parsing()
    for arg in vars(args):
-      print(arg, getattr(args, arg))
+      print("{} : \t{}".format(arg, getattr(args, arg)))
