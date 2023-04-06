@@ -18,7 +18,11 @@ parser.add_argument("--timeout=TIME", help="set I/O timeout in seconds")
 parser.add_argument("--blocking-io", help="use blocking I/O for the remote shell")
 parser.add_argument("-I","--ignore-times", help="don't skip files that match in size and time")
 parser.add_argument("--size-only", help="skip files that match in size")
-parser.add_argument("--address=ADDRESS", help="bind address for outgoing socket to daemon")
 parser.add_argument("--port=PORT", help="specify double-colon alternate port number")
 parser.add_argument("--list-only", help="list the files instead of copying them")
-print("zob")
+
+#commands to run with daemon
+parser.add_argument("--daemon", help="run as an mrsync daemon")
+parser.add_argument("--address=ADRESS", help="bind to the specified address")
+parser.add_argument("--no-detach", help="do not detach from the parent")
+parser.add_argument("--port=PORT", help="listen on alternate port number")
