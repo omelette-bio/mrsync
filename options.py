@@ -40,6 +40,7 @@ parser.add_argument("--port=PORT", help="listen on alternate port number", actio
 def parsing():
    return parser.parse_args()
 
+# verify that it works
 if __name__ == "__main__":
    args = parsing()
    for arg in vars(args):
