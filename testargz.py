@@ -1,9 +1,5 @@
-import argparse
+import testargz2
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument("-p", type=int, help="jsp")
-
-args = parser.parse_args()
+args = testargz2.parsing()
 
 print(args.p)
