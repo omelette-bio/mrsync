@@ -1,6 +1,9 @@
 os.listdir(chemin) :
    => renvoie une liste de tous les fichiers et dossiers du répertoir chemin
 
+os.stat(chemin) :
+   => renvoie un objet avec les informations du fichier chemin (on va plus utiliser mtime jpense)
+
 os.path.join(chemin, nom) :
    => renvoie un chemin complet à partir du chemin et du nom par exemple :
       os.path.join("C:/Users", "toto.txt") renvoie "C:/Users/toto.txt"
