@@ -1,0 +1,42 @@
+argparse.ArgumentParser() :
+   => crée un objet qui permet d'y associer des arguments avec les méthodes suivantes
+
+imaginons qu'on crée un objet parser avec la ligne suivante :
+   parser = argparse.ArgumentParser()
+
+parser.add_argument()
+   => ajoute un argument à l'objet parser, on lui indique une liste de chaînes de caractères
+      qui correspondent aux options de l'argument
+      exemple :
+         parser.add_argument("-v", "--verbose") crée un argument qui peut être appelé avec -v ou --verbose
+      
+      on peut aussi lui indiquer un message d'aide qui sera affiché avec l'option -h ou --help
+      exemple :
+         parser.add_argument("-v", "--verbose", help="affiche des messages de débuggage")
+      
+      on peut aussi lui indiquer un comportement à l'appel de l'argument
+      => on a par exemple le comportement "store_true" qui stocke la valeur True dans la variable args.verbose
+         ou le comportement "count" qui stocke un entier dans la variable args.verbose qui est incrémenté à chaque appel
+
+      exemple :
+         parser.add_argument("-v", "--verbose", help="affiche des messages de débuggage", action="store_true")
+         => si l'argument est appelé, la variable args.verbose vaudra True
+            si l'argument n'est pas appelé, la variable args.verbose vaudra False
+      
+      on peut aussi lui indiquer un type de variable à stocker dans la variable args.verbose en ajoutant le paramètre type
+      exemple :
+         parser.add_argument("-v", "--verbose", help="affiche des messages de débuggage", action="store_true", type=int)
+         => si -v 1 est appelé, alors args.verbose vaudra 1
+            si -v 2 est appelé, alors args.verbose vaudra 2
+            si -v 3 est appelé, alors args.verbose vaudra 3
+            etc.
+      
+      (à noter que si on ne met rien, args.verbose vaudra None, il faut donc spécifier une valeur par défaut dans le code avec le paramètre default)
+
+parser.parse_args() :
+   => parse les arguments passés au programme et les stocke dans la variable args sous forme de dictionnaire
+      exemple :
+         parser.add_argument("-v", "--verbose", help="affiche des messages de débuggage", action="store_true")
+         args = parser.parse_args()
+         => args.verbose vaudra True si l'argument -v ou --verbose est appelé
+            args.verbose vaudra False si l'argument -v ou --verbose n'est pas appelé
