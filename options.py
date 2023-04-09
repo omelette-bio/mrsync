@@ -47,7 +47,7 @@ parser.add_argument("--port", help="listen on alternate port number", type=str)
 def parsing():
    args = parser.parse_args()
    if ((args.verbose > 0) and (args.quiet)):
-      print("Error: -v and -q cannot be used together")
+      print("\033[91mError: -v and -q cannot be used together\033[0m")
       sys.exit(1)
    return args
 
