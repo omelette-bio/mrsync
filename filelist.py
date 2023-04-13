@@ -25,6 +25,6 @@ def list_files(path, recursive=False):
          directories.pop()
    return(files)
 
-
-print(list_files(args.path, True))
-print(list_files(args.path))
+if __name__ == "__main__":
+   print(list_files(args.path, True))
+   print(list_files(args.path))
