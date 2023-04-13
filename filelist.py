@@ -2,24 +2,26 @@ import os, argparse
 
 
 def list_files(path, recursive=False):
-   os.chdir(path)
-   print(os.getcwd())
-   directories = [path]
-   files = []
+   if not os.path.isdir(path):
+      return([path])
+   else:
+      os.chdir(path)
+      directories = [path]
+      files = []
 
-   while len(directories) > 0:
-      for i in os.listdir(os.getcwd()):
-         if i[0] == "." or i[0] == "_" or i[0] == "~":
-            pass
-         elif os.path.isdir(i) and recursive:
-            directories.append(os.path.join(os.getcwd()) + "/" + i)
+      while len(directories) > 0:
+         for i in os.listdir(os.getcwd()):
+            if i[0] == "." or i[0] == "_" or i[0] == "~":
+               pass
+            elif os.path.isdir(i) and recursive:
+               directories.append(os.path.join(os.getcwd()) + "/" + i)
+            elif os.path.isfile(i):
+               files.append(i)
+         if recursive:
+            os.chdir(directories.pop())
          else:
-            files.append(i)
-      if recursive:
-         os.chdir(directories.pop())
-      else:
-         directories.pop()
-   return(files)
+            directories.pop()
+      return(files)
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()

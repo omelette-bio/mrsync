@@ -1,6 +1,6 @@
-import options, sys
+import options, sys, sender
 
 args = options.parsing()
-if args.list_only: options.listing(args.source)
+sender.send_files(args.source, args)
 
 sys.exit(0)
