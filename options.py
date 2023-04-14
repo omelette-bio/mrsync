@@ -4,7 +4,7 @@ import argparse, os, sys
 parser = argparse.ArgumentParser()
 
 # required arguments for source and destination
-parser.add_argument("source", help="source file or directory")
+parser.add_argument("source", nargs="+", help="source file or directory")
 parser.add_argument("destination", help="destination file or directory")
 
 
