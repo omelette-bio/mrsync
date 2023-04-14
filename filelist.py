@@ -43,12 +43,3 @@ def list_files(path, recursive=False):
          directories.pop(0)
       
    return files
-
-if __name__ == "__main__":
-   parser = argparse.ArgumentParser()
-   parser.add_argument("path", help="path to list files from")
-   args = parser.parse_args()
-   
-   
-   print(list_files(args.path, True))
-   print(list_files(args.path))
