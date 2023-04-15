@@ -20,8 +20,11 @@ def list_files(path, recursive=False):
          directories.append(i)
    
    if all_truc_dir(path):
-      directories = path
-         
+      if type(path) == str:
+         directories.append(path)
+      else:
+         directories = path
+   
    if all_truc_dir(path) and not recursive:
       for j in os.listdir(directories[0]):
          if j[0] == "." or j[0] == "_" or j[0] == "~":
@@ -37,9 +40,15 @@ def list_files(path, recursive=False):
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
             elif os.path.isdir(j):
-               directories.append(os.path.join(directories[0]) + "/" + j)
+               if directories[0][-1] == "/":
+                  directories.append(os.path.join(directories[0]) + j)
+               else:
+                  directories.append(os.path.join(directories[0]) + "/" + j)
             else:
-               files.append(os.path.join(directories[0]) + "/" + j)
+               if directories[0][-1] == "/":
+                  files.append(os.path.join(directories[0]) + j)
+               else:
+                  files.append(os.path.join(directories[0]) + "/" + j)
          directories.pop(0)
       
    return files
