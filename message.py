@@ -18,10 +18,22 @@ Pour réaliser ces fonctions, nous utilisons os.read et os.write, mais aussi pic
 """
 
 def send(fd,tag,v):
-   s = pickle.dumps(v)
-   n = len(s)
-   os.write(fd, n.to_bytes(3, byteorder='big'))
-   os.write(fd, tag.encode())
-   os.write(fd, s)
+   """send a message on fd"""
+   msg = pickle.dumps(v)
+   size = len(msg)
+   os.write(fd,tag.encode())
+   os.write(fd,size.to_bytes(3,"big"))
+   os.write(fd,msg)
 
-fd = os.open("fifo", os.O_WRONLY)
+def receive(fd):
+   """receive a message on fd"""
+   tag = os.read(fd,3).decode()
+   size = int.from_bytes(os.read(fd,3),"big")
+   msg = os.read(fd,size)
+   return tag,pickle.loads(msg)
+
+
+if __name__ == "__main__":
+   rd,wr = os.pipe()
+   send(wr,"tag",42)
+   print(receive(rd))
