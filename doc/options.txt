@@ -39,4 +39,4 @@ parser.parse_args() :
          parser.add_argument("-v", "--verbose", help="affiche des messages de débuggage", action="store_true")
          args = parser.parse_args()
          => args.verbose vaudra True si l'argument -v ou --verbose est appelé
-            args.verbose vaudra False si l'argument -v ou --verbose n'est pas appelé
+            args.verbose vaudra False si l'argument -v ou --verbose n'est pas appelé feur

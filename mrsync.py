@@ -22,13 +22,12 @@ if os.fork() == 0:
    destination_files = sender.list_files(".", args)
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
-   print("received",tag,v)
-   print("destination files", destination_files)
    # generator to send files
    if os.fork() == 0:
-      list_to_send, list_to_modify = generator.compare(v, destination_files)
+      list_to_send, list_to_modify, list_to_delete = generator.compare(v, destination_files)
       print("list_to_send", list_to_send)
       print("list_to_modify", list_to_modify)
+      print("list_to_delete", list_to_delete)
       sys.exit(0)
    os.close(fdw2)
    os.close(fdr1)
@@ -41,6 +40,7 @@ if os.fork() == 0:
    os.close(fdr1)
    files = sender.list_files(args.source, args)
    message.send(fdw1, "files to send", files)
+   # wait for request messages
    os.close(fdw1)
    os.close(fdr2)
    sys.exit(0)
