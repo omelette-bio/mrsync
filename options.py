@@ -59,13 +59,3 @@ def listing(directory):
       os.execvp("ls", ["ls", "-l", directory])
    else:
       os.wait()
-
-
-
-
-
-# verify that it works
-if __name__ == "__main__":
-   args = parsing()
-   for arg in vars(args):
-      print("{} : \t{}".format(arg, getattr(args, arg)))

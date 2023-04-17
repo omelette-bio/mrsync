@@ -3,7 +3,7 @@ import options, sys, sender, os, message, time
 args = options.parsing()
 
 if args.list_only: 
-   sender.list_files(args.source, args)
+   options.listing(args.source)
    sys.exit(0)
 
 # connect to server with pipe
@@ -23,7 +23,6 @@ if os.fork() == 0:
    (tag,v) = message.receive(fdr1)
    print("received",tag,v)
    sys.exit(0)
-   
 
 
 #client process, read on fdr2, write on fdw1
