@@ -22,6 +22,7 @@ if os.fork() == 0:
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
    print("received",tag,v)
+   sys.exit(0)
    
 
 
@@ -31,5 +32,6 @@ if os.fork() == 0:
    os.close(fdr1)
    files = sender.list_files(args.source, args)
    message.send(fdw1, "files to send", files)
+   sys.exit(0)
 
 sys.exit(0)
