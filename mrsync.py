@@ -18,10 +18,15 @@ if os.fork() == 0:
    os.close(fdw1)
    os.close(fdr2)
    # create the list of files at the destination
-   destination_files = sender.list_files(args.destination, args)
+   os.chdir(args.destination)
+   destination_files = sender.list_files(".", args)
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
    print("received",tag,v)
+   print("destination files", destination_files)
+   # generator to send files
+   if os.fork() == 0:
+      print("caca")
    sys.exit(0)
 
 
