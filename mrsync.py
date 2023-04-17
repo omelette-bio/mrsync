@@ -1,4 +1,4 @@
-import options, sys, sender, os, message, time
+import options, sys, sender, os, message, generator
 
 args = options.parsing()
 
@@ -26,7 +26,12 @@ if os.fork() == 0:
    print("destination files", destination_files)
    # generator to send files
    if os.fork() == 0:
-      print("caca")
+      list_to_send, list_to_modify = generator.compare(v, destination_files)
+      print("list_to_send", list_to_send)
+      print("list_to_modify", list_to_modify)
+      sys.exit(0)
+   os.close(fdw2)
+   os.close(fdr1)
    sys.exit(0)
 
 
@@ -36,6 +41,8 @@ if os.fork() == 0:
    os.close(fdr1)
    files = sender.list_files(args.source, args)
    message.send(fdw1, "files to send", files)
+   os.close(fdw1)
+   os.close(fdr2)
    sys.exit(0)
 
 sys.exit(0)
