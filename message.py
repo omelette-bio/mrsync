@@ -1,4 +1,4 @@
-import pickle, os
+import pickle, os, select
 
 def send(fd,tag,v):
    """send a message on fd"""
@@ -12,6 +12,10 @@ def send(fd,tag,v):
 
 def receive(fd):
    """receive a message on fd"""
+   while not select.select([fd],[],[], 6)[0]:
+      pass
+   
+   
    tag_size = int.from_bytes(os.read(fd,3),"big")
    tag = os.read(fd,tag_size).decode()
    size = int.from_bytes(os.read(fd,3),"big")

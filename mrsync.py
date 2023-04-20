@@ -24,11 +24,30 @@ if os.fork() == 0:
    (tag,v) = message.receive(fdr1)
    # generator to send files
    if os.fork() == 0:
-      list_to_send, list_to_modify, list_to_delete = generator.compare(v, destination_files)
-      print("list_to_send", list_to_send)
-      print("list_to_modify", list_to_modify)
-      print("list_to_delete", list_to_delete)
+      # create the list of files to send, modify and delete
+      send, modify, delete = generator.compare(v, destination_files)
+
+      state = "send"
+      # we send some requests to the client, if it's not empty
+      if len(send) > 0:
+         message.send(fdw2, "send", send)
+
+      if len(modify) > 0:
+         message.send(fdw2, "modify", modify)
+      
+      if len(send) == 0 and len(modify) == 0:
+         message.send(fdw2, "end", "No files to send or modify")
+         state = "end"
+      
+      if state == "send":
+         message.send(fdw2, "end", "No more to send")
+      
+      
+      os.close(fdw2)
       sys.exit(0)
+   
+   os.wait()
+   
    os.close(fdw2)
    os.close(fdr1)
    sys.exit(0)
@@ -36,11 +55,21 @@ if os.fork() == 0:
 
 #client process, read on fdr2, write on fdw1
 if os.fork() == 0:
+   # close the unnecessary pipes
    os.close(fdw2)
    os.close(fdr1)
+   
+   # create the list of files at the source
    files = sender.list_files(args.source, args)
-   message.send(fdw1, "files to send", files)
-   # wait for request messages
+   # and send it to the server
+   message.send(fdw1, "data", files)
+   
+   # wait for request messages from the generator
+   tag = ""
+   while tag != "end":
+      (tag, v) = message.receive(fdr2)
+      print(f"{tag} : {v}")
+   
    os.close(fdw1)
    os.close(fdr2)
    sys.exit(0)

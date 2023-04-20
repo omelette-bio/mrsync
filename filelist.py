@@ -1,6 +1,6 @@
-import os, argparse, generator
+import os, argparse
 
-def all_truc_dir(path):
+def all_obj_dir(path):
    all = True
    for i in path:
       if not os.path.isdir(i):
@@ -22,13 +22,13 @@ def list_files(path, recursive=False):
          else:
             directories.append(os.getcwd()+i)
    
-   if all_truc_dir(path):
+   if all_obj_dir(path):
       if type(path) == str:
          directories.append(path)
       else:
          directories = path
    
-   if all_truc_dir(path) and not recursive:
+   if all_obj_dir(path) and not recursive:
       for j in os.listdir(directories[0]):
          if j[0] == "." or j[0] == "_" or j[0] == "~":
             pass
