@@ -1,4 +1,3 @@
-
 def compare(a, b):
    list_to_send = []
    list_to_modify = []
