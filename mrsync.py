@@ -3,7 +3,7 @@ import options, sys, sender, os, message, generator
 args = options.parsing()
 
 if args.list_only: 
-   options.listing(args.source)
+   options.listing(generator.sort_by_path(sender.list_files(args.source, args)))
    sys.exit(0)
 
 # connect to server with pipe
@@ -40,7 +40,7 @@ if os.fork() == 0:
          state = "end"
       
       if state == "send":
-         message.send(fdw2, "end", "No more to send")
+         message.send(fdw2, "end", "No more to send/modify")
       
       
       os.close(fdw2)

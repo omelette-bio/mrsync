@@ -54,8 +54,7 @@ def parsing():
 
 # function to call to list the contents of a directory
 # useful later for listing files to send
-def listing(directory):
-   if os.fork() == 0: 
-      os.execvp("ls", ["ls", "-l", directory])
-   else:
-      os.wait()
+def listing(file_list):
+   print("Files to send: ")
+   for i in file_list:
+      print(f"* {i} : {file_list[i][0]}  {file_list[i][1]}  {file_list[i][2]}")
