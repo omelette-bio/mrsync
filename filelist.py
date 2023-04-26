@@ -26,7 +26,7 @@ def list_files(path, recursive=False):
       if type(path) == str:
          directories.append(path)
       else:
-         directories = path
+         directories = path.copy()
    
    if all_obj_dir(path) and not recursive:
       for j in os.listdir(directories[0]):
@@ -37,11 +37,17 @@ def list_files(path, recursive=False):
          else:
             files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime]
    
+   base_directories = []
+   
    if recursive:
+      files_list = []
       while len(directories) > 0:
          os.chdir(directories[0])
          directory = os.getcwd()
+         if directories[0] in path:
+            base_directories.append(directory)
          for j in os.listdir(directory):
+            # add the parent directory to the file name and remove the parent folder from the path if we are in a subdirectory
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
             elif os.path.isdir(j):
@@ -50,9 +56,22 @@ def list_files(path, recursive=False):
                else:
                   directories.append(os.path.join(directory) + "/" + j)
             else:
-               files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime]
+               if directory not in base_directories:
+                  parent = os.path.basename(directory)
+                  j = os.path.join(parent, j)
+                  files_list.append(j)
+               else:
+                  files_list.append(j)
          directories.pop(0)
       
+      # for each file in files_list, add it to the files dictionnary, with the path, size and last modification time
+      for i in base_directories:
+         os.chdir(i)
+         for j in files_list:
+            if os.path.exists(os.path.join(i, j)):
+               files[j] = [i, os.stat(j).st_size, os.stat(j).st_mtime]
+         
+         
    return files
 
 if __name__ == "__main__":

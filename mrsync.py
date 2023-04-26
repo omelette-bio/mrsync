@@ -19,13 +19,16 @@ if os.fork() == 0:
    os.close(fdr2)
    # create the list of files at the destination
    os.chdir(args.destination)
-   destination_files = sender.list_files(".", args)
+   destination_files = generator.sort_by_path(sender.list_files(".", args))
+   
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
+   
+   files_to_send = generator.sort_by_path(v)
    # generator to send files
    if os.fork() == 0:
       # create the list of files to send, modify and delete
-      send, modify, delete = generator.compare(v, destination_files)
+      send, modify, delete = generator.compare(files_to_send, destination_files)
 
       state = "send"
       # we send some requests to the client, if it's not empty
@@ -68,7 +71,8 @@ if os.fork() == 0:
    tag = ""
    while tag != "end":
       (tag, v) = message.receive(fdr2)
-      print(f"{tag} : {v}")
+      if args.verbose > 0:
+         print(f"{tag} : {v}")
    
    os.close(fdw1)
    os.close(fdr2)
