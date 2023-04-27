@@ -29,13 +29,15 @@ def list_files(path, recursive=False):
          directories = path.copy()
    
    if all_obj_dir(path) and not recursive:
-      for j in os.listdir(directories[0]):
-         if j[0] == "." or j[0] == "_" or j[0] == "~":
-            pass
-         elif os.path.isdir(j):
-            pass
-         else:
-            files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime]
+      for i in directories:
+         os.chdir(i)
+         for j in os.listdir(i):
+            if j[0] == "." or j[0] == "_" or j[0] == "~":
+               pass
+            elif os.path.isdir(j):
+               pass
+            else:
+               files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime]
    
    base_directories = []
    
