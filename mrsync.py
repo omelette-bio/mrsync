@@ -1,4 +1,5 @@
-import options, sys, sender, os, message, generator
+import options, sender, message, generator, server
+import sys, os
 
 args = options.parsing()
 
@@ -50,6 +51,8 @@ if os.fork() == 0:
       sys.exit(0)
    
    os.wait()
+   
+   print(server.create_folder_list(args.source, args.recursive))
    
    os.close(fdw2)
    os.close(fdr1)
