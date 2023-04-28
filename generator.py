@@ -1,3 +1,4 @@
+import os
 # function that returns a sorted dictionary of files following the path name 
 
 def sort_by_path(dictionnary):
@@ -12,12 +13,14 @@ def compare(a, b):
    list_to_modify = []
    list_to_delete = []
    for i in a:
+      #i = os.path.join(os.path.basename(a[i][0]),i)
       if i in b:
          if a[i][2] > b[i][2]:
             list_to_modify.append(i)
       else:
          list_to_send.append(i)
    for i in b:
+      print(i)
       if i not in a:
          list_to_delete.append(i)
    return list_to_send, list_to_modify, list_to_delete

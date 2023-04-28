@@ -21,6 +21,7 @@ if os.fork() == 0:
    # create the list of files at the destination
    os.chdir(args.destination)
    destination_files = generator.sort_by_path(sender.list_files(".", args))
+   print(destination_files)
    
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
