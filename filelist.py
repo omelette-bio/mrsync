@@ -49,6 +49,7 @@ def list_files(path, recursive=False):
          if directories[0] in path:
             base_directories.append(directory)
          for j in os.listdir(directory):
+            print(os.getcwd())
             # add the parent directory to the file name and remove the parent folder from the path if we are in a subdirectory
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
@@ -58,12 +59,11 @@ def list_files(path, recursive=False):
                else:
                   directories.append(os.path.join(directory) + "/" + j)
             else:
-               if directory not in base_directories:
-                  parent = os.path.basename(directory)
-                  j = os.path.join(parent, j)
-                  files_list.append(j)
-               else:
-                  files_list.append(j)
+               # while we are in a subdirectory, add the parent directory to the file name
+               while directory not in base_directories:
+                  j = os.path.basename(directory) + "/" + j
+                  directory = os.path.dirname(directory)
+               files_list.append(j)
          directories.pop(0)
       
       # for each file in files_list, add it to the files dictionnary, with the path, size and last modification time

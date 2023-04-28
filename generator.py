@@ -20,7 +20,6 @@ def compare(a, b):
       else:
          list_to_send.append(i)
    for i in b:
-      print(i)
       if i not in a:
          list_to_delete.append(i)
    return list_to_send, list_to_modify, list_to_delete

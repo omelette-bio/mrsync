@@ -21,7 +21,6 @@ if os.fork() == 0:
    # create the list of files at the destination
    os.chdir(args.destination)
    destination_files = generator.sort_by_path(sender.list_files(".", args))
-   print(destination_files)
    
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
@@ -60,7 +59,8 @@ if os.fork() == 0:
       (tag,v) = message.receive(fdr1)
       if type(v) == tuple:
          file, folder, data = v
-         print(f"Receiving {file}...")
+         if args.verbose > 0:
+            print(f"Receiving {file}...")
       
          if tag == "sendfile":
             #check if the folder exists, if not create it
@@ -101,7 +101,7 @@ if os.fork() == 0:
    files = sender.list_files(args.source, args)
    # and send it to the server
    message.send(fdw1, "data", files)
-   
+   print(files)
    # wait for request messages from the generator
    tag = ""
    send_list = []
