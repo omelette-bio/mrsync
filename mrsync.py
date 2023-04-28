@@ -30,8 +30,6 @@ if os.fork() == 0:
    if os.fork() == 0:
       # create the list of files to send, modify and delete
       send, modify, delete = generator.compare(files_to_send, destination_files, len(args.source))
-
-      
       
       state = "send"
       # we send some requests to the client, if it's not empty
@@ -40,6 +38,9 @@ if os.fork() == 0:
 
       if len(modify) > 0:
          message.send(fdw2, "modify", modify)
+      
+      if len(delete) > 0:
+         message.send(fdw2, "delete", delete)
       
       if len(send) == 0 and len(modify) == 0:
          message.send(fdw2, "end", "No files to send or modify")
@@ -146,10 +147,22 @@ if os.fork() == 0:
       if args.verbose > 0:
          print(f"{tag} : {v}")
          print("")
+         
       if tag == "send":
          send_list = v
+      
       elif tag == "modify":
          modify_list = v
+   
+      elif tag == "delete" and args.delete:
+         server.order_list_delete(v)
+         print(v)
+         for file in v:
+            os.remove(os.path.join(args.destination, file))
+            # if the folder is empty, delete it
+            if os.path.dirname(file) != "":
+               if not os.listdir(os.path.join(args.destination,os.path.dirname(file))):
+                  os.rmdir(os.path.join(args.destination,os.path.dirname(file)))
    
    # now for each file to send, we send the name, his path and the content
    if send_list != []:
@@ -238,6 +251,8 @@ if os.fork() == 0:
       
       message.send(fdw1, "end", "end")
    
+   if modify_list == [] and send_list == []:
+      message.send(fdw1, "end", "end")
    
    os.close(fdw1)
    os.close(fdr2)
