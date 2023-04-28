@@ -32,7 +32,7 @@ def compare(a, b, nb_source):
                list_to_modify.append(file)
          else:
             list_to_send.append(file)
-      
+      #pas fini
          
       
       
