@@ -59,28 +59,34 @@ if os.fork() == 0:
       (tag,v) = message.receive(fdr1)
       if type(v) == tuple:
          file, folder, data = v
-         if args.verbose > 0:
-            print(f"Receiving {file}...")
       
          if tag == "sendfile":
             #check if the folder exists, if not create it
             if not os.path.isdir(folder):
                os.makedirs(folder)
                if args.verbose > 0:
-                  print(f"Creating folder {folder}")
+                  print(f"Creating folder {folder}", file=sys.stderr)
             
             #create the file
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
+            
+            if args.verbose > 0:
+               print(f"Receiving {file}...", file=sys.stderr)
             
             #change the standard output to the file
             
             os.dup2(currentfile, 1)
             
             #write the data
+            
             os.write(1, data)
             os.close(currentfile)
 
+      elif tag == "endfile" and args.verbose > 0:
+         print(f"Done", file=sys.stderr)
+         print("")
+         
       elif tag == "end":
          os.dup2(1, 1)
          break
@@ -101,7 +107,6 @@ if os.fork() == 0:
    files = sender.list_files(args.source, args)
    # and send it to the server
    message.send(fdw1, "data", files)
-   print(files)
    # wait for request messages from the generator
    tag = ""
    send_list = []
@@ -132,16 +137,13 @@ if os.fork() == 0:
          sending_file = os.open(full_path, os.O_RDONLY)
          
          if args.verbose > 0:
-            print(f"Reading : {full_path}")
+            print(f"Reading...")
             print("")
             
          # read the file and send it, in multiple parts if size > 16 Mo
          while True:
             data = os.read(sending_file, 16*1024*1024)
             
-            if not data:
-               message.send(fdw1, "endfile", "end")
-               break
             
             if os.path.dirname(file) == "":
                folder = os.path.basename(files[file][0])
@@ -150,6 +152,11 @@ if os.fork() == 0:
                folder = os.path.join(os.path.basename(files[file][0]), os.path.dirname(file))
             
             message.send(fdw1, "sendfile", (file, folder, data))
+            
+            # send "endfile" if there the file has been read entirely
+            if len(data) < 16*1024*1024:
+               message.send(fdw1, "endfile", "endfile")
+               break
          
          os.close(sending_file)
       

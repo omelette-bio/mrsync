@@ -49,7 +49,6 @@ def list_files(path, recursive=False):
          if directories[0] in path:
             base_directories.append(directory)
          for j in os.listdir(directory):
-            print(os.getcwd())
             # add the parent directory to the file name and remove the parent folder from the path if we are in a subdirectory
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
