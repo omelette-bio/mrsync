@@ -1,7 +1,7 @@
 import argparse, os, sys
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(add_help=False)
 
 # required arguments for source and destination
 parser.add_argument("source", nargs="+", help="source file or directory")
@@ -32,6 +32,7 @@ parser.add_argument("--blocking-io", help="use blocking I/O for the remote shell
 parser.add_argument("-I", "--ignore-times", help="don't skip files that match in size and time", action="store_true")
 parser.add_argument("--size-only", help="skip files that match in size", action="store_true")
 parser.add_argument("--list-only", help="list the files instead of copying them", action="store_true")
+parser.add_argument("-h", "--help", help="list all options", action="store_true")
 
 
 #commands to run with daemon, this help shows only when --daemon is used
@@ -51,10 +52,24 @@ def parsing():
       sys.exit(1)
    return args
 
-
+def help():
+   if os.fork() == 0:
+      os.execvp('less', ['less', 'mrsync.txt'])
+   os.wait()
+   
 # function to call to list the contents of a directory
 # useful later for listing files to send
 def listing(file_list):
    print("Files to send: ")
    for i in file_list:
       print(f"* {i} : {file_list[i][0]}  {file_list[i][1]}  {file_list[i][2]}")
+      
+      
+
+if __name__ == "__main__":
+   args = parsing()
+   for i in vars(args):
+      print(i, getattr(args, i))
+   if args.help == True :
+      help()
+      
