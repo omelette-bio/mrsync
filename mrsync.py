@@ -48,6 +48,7 @@ if os.fork() == 0:
       
       
       os.close(fdw2)
+      os.close(fdr1)
       sys.exit(0)
    
    os.wait()
