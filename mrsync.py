@@ -3,9 +3,14 @@ import sys, os
 
 args = options.parsing()
 
+if args.help:
+   options.help()
+   sys.exit(0)
+
 if args.list_only: 
    options.listing(generator.sort_by_path(sender.list_files(args.source, args)))
    sys.exit(0)
+
 
 # connect to server with pipe
 # fork to create a child process which will be the server
@@ -156,7 +161,6 @@ if os.fork() == 0:
    
       elif tag == "delete" and args.delete:
          server.order_list_delete(v)
-         print(v)
          for file in v:
             os.remove(os.path.join(args.destination, file))
             # if the folder is empty, delete it
@@ -168,6 +172,9 @@ if os.fork() == 0:
    if send_list != []:
       
       for file in send_list:
+         
+         if len(args.source) > 1:
+            file = '/'.join(file.split('/')[1:])
          
          full_path = os.path.join(files[file][0], file)
          
@@ -211,6 +218,9 @@ if os.fork() == 0:
    if modify_list != []:
       
       for file in modify_list:
+         
+         if len(args.source) > 1:
+            file = '/'.join(file.split('/')[1:])
          
          full_path = os.path.join(files[file][0], file)
          
