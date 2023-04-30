@@ -105,11 +105,8 @@ if os.fork() == 0:
       
       if tag == "received-nothing":
          if args.verbose > 1:
-            print("Error in files received, exiting...", file=sys.stderr)
-         message.send(fdw2, "error", "Error in files received")
-         os.close(fdw2)
-         os.close(fdr1)
-         sys.exit(21)
+            print("Error in files received, skipping", file=sys.stderr)
+         continue
          
       # if the message is a tuple, that means we got a file to copy
       if type(v) == tuple:
@@ -246,7 +243,7 @@ if os.fork() == 0:
    if send_list != []:
       
       for file in send_list:
-         
+         print(file)
          if len(args.source) > 1:
             file = '/'.join(file.split('/')[1:])
          
