@@ -1,5 +1,4 @@
-import filelist, message
-import os
+import filelist
 
 def list_files(path, arguments):
    recursive = arguments.recursive | arguments.archive
