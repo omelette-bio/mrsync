@@ -1,5 +1,7 @@
+#! /usr/bin/python3
+
 import options, sender, message, generator, server
-import sys, os
+import sys, os, signal
 
 args = options.parsing()
 
@@ -11,6 +13,15 @@ if args.list_only:
    options.listing(generator.sort_by_path(sender.list_files(args.source, args)))
    sys.exit(0)
 
+def handler(signum, frame):
+   global pipes
+   print("Interrupted, exiting...", file=sys.stderr)
+   for fd in pipes:
+      os.close(fd)
+   sys.exit(20)
+
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGUSR1, handler)
 
 # connect to server with pipe
 # fork to create a child process which will be the server
@@ -23,6 +34,9 @@ if os.fork() == 0:
    # close unused pipes
    os.close(fdw1)
    os.close(fdr2)
+   
+   pipes = [fdr1, fdw2]
+   
    # create the list of files at the destination
    os.chdir(args.destination)
    destination_files = generator.sort_by_path(sender.list_files(".", args))
@@ -65,8 +79,14 @@ if os.fork() == 0:
    
    while True:
       (tag,v) = message.receive(fdr1)
+      if tag == "timeout":
+         print("Timeout, exiting...", file=sys.stderr)
+         os.close(fdw2)
+         os.close(fdr1)
+         sys.exit(21)
+      
       if type(v) == tuple:
-         file, folder, data = v
+         file, folder, data, perms = v
       
          if tag == "sendfile":
             #check if the folder exists, if not create it
@@ -79,6 +99,10 @@ if os.fork() == 0:
             #create the file
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
+            
+            if args.perms:
+               print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
+               os.chmod(file, perms)
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
@@ -135,6 +159,7 @@ if os.fork() == 0:
    # close the unnecessary pipes
    os.close(fdw2)
    os.close(fdr1)
+   pipes = [fdr2, fdw1]
    
    # create the list of files at the source
    files = sender.list_files(args.source, args)
@@ -181,15 +206,30 @@ if os.fork() == 0:
          if args.verbose > 0:
             print(f"Sending : {full_path}")
          
-         sending_file = os.open(full_path, os.O_RDONLY)
-         
+         try:
+            sending_file = os.open(full_path, os.O_RDONLY)
+         except:
+            if args.verbose > 0:
+               print(f"Error while opening {file}", file=sys.stderr)
+            os.close(fdw1)
+            os.close(fdr2)
+            sys.exit(23)
+            
          if args.verbose > 0:
             print(f"Reading...")
             print("")
             
          # read the file and send it, in multiple parts if size > 16 Mo
          while True:
-            data = os.read(sending_file, 16*1024*1024)
+            try:
+               data = os.read(sending_file, 16*1024*1024)
+            except:
+               if args.verbose > 0:
+                  print(f"Error while reading {file}", file=sys.stderr)
+               os.close(sending_file)
+               os.close(fdw1)
+               os.close(fdr2)
+               sys.exit(11)
             
             folder = ""
             
@@ -203,8 +243,8 @@ if os.fork() == 0:
             else:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
-                  
-            message.send(fdw1, "sendfile", (file, folder, data))
+            
+            message.send(fdw1, "sendfile", (file, folder, data, files[file][3]))
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:

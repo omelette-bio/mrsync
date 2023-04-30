@@ -62,7 +62,7 @@ def help():
 def listing(file_list):
    print("Files to send: ")
    for i in file_list:
-      print(f"* {i} : {file_list[i][0]}  {file_list[i][1]}  {file_list[i][2]}")
+      print(f"* {i} : {file_list[i][0]}  {file_list[i][1]}  {file_list[i][2]} {file_list[i][3]}")
       
       
 

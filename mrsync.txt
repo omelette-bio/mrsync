@@ -154,16 +154,6 @@ OPTIONS SUMMARY
        -h   --help                  show this help
 
 
-       mrsync  can also be run as a daemon, in which case the following options
-       are accepted:
-
-            --daemon                run as an mrsync daemon
-            --address=ADDRESS       bind to the specified address
-            --no-detach             do not detach from the parent
-            --port=PORT             listen on alternate port number
-        -h, --help                  show this help (if used after --daemon)
-
-
 
 OPTIONS
        Many  of  the  command  line options  have  two  variants,  one short and 
@@ -384,51 +374,6 @@ OPTIONS
                   mrsync -av --list-only foo* dest/
 
 
-DAEMON OPTIONS
-       The options allowed when starting an mrsync daemon are as follows:
-
-
-       --daemon
-              This  tells mrsync that it is to run as a daemon.  The daemon you
-              start running may be accessed using an mrsync  client  using  the
-              host::dir or mrsync://host/dir/ syntax.
-
-              If  standard input is a socket then mrsync will assume that it is
-              being run via inetd, otherwise it will detach from  the  current
-              terminal  and  become a background daemon.  The daemon will read
-              the config file (mrsyncd.conf) on each connect made by  a  client
-              and respond to requests accordingly.  See the mrsyncd.conf(5) man
-              page for more details.
-
-
-       --address
-              By default mrsync will bind to the wildcard address when run as a
-              daemon  with  the  --daemon option.  The --address option allows
-              you to specify a specific IP address (or hostname) to  bind  to.
-              This  makes  virtual  hosting  possible  in conjunction with the
-              --config option.  See also the "address" global  option  in  the
-              mrsyncd.conf manpage.
-
-       --no-detach
-              When running as a daemon, this option  instructs  mrsync  to  not
-              detach  itself  and become a background process.  This option is
-              required when running as a service on Cygwin, and  may  also  be
-              useful when mrsync is supervised by a program such as daemontools
-              or AIX's System Resource Controller.  --no-detach is also recom-
-              mended  when  mrsync is run under a debugger.  This option has no
-              effect if mrsync is run from inetd or sshd.
-
-
-       --port=PORT
-              This specifies an alternate TCP port number for  the  daemon  to
-              listen  on  rather than the default of 873.  See also the "port"
-              global option in the mrsyncd.conf manpage.
-
-       -h, --help
-              When  specified after --daemon, print a short help page describ-
-              ing the options available for starting an mrsync daemon.
-
-
 
 
 
@@ -489,7 +434,8 @@ SEE ALSO
 
 
 BUGS
-       [TO BE COMPLETED BY STUDENTS]
+       If verbose is enabled, the program won't close until ctrl-c is pressed.
+       If there is a timeout on one side, the other side won't close and end his job.
 
 
 INTERNAL OPTIONS

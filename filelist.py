@@ -15,7 +15,7 @@ def list_files(path, recursive=False):
       if i[0] == "." or i[0] == "_" or i[0] == "~":
          pass
       elif not os.path.isdir(i):
-         files[i] = [os.getcwd(), os.stat(i).st_size, os.stat(i).st_mtime]
+         files[i] = [os.getcwd(), os.stat(i).st_size, os.stat(i).st_mtime, os.stat(i).st_mode]
       else:
          if i[0] == "/":
             directories.append(i)
@@ -37,7 +37,7 @@ def list_files(path, recursive=False):
             elif os.path.isdir(j):
                pass
             else:
-               files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime]
+               files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime, os.stat(j).st_mode]
    
    base_directories = []
    
@@ -72,7 +72,7 @@ def list_files(path, recursive=False):
          os.chdir(i)
          for j in files_list:
             if os.path.exists(os.path.join(i, j)):
-               files[j] = [i, os.stat(j).st_size, os.stat(j).st_mtime]
+               files[j] = [i, os.stat(j).st_size, os.stat(j).st_mtime, os.stat(j).st_mode]
          
          
    return files
