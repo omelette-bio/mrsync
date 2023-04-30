@@ -9,7 +9,7 @@ def send(fd,tag,v):
       msg = pickle.dumps(v)
       size = len(msg)
       #encode message size on 16 Mo
-      os.write(fd,size.to_bytes(3,"big"))
+      os.write(fd,size.to_bytes(4,"big"))
       os.write(fd,msg)
       return True
    except:

@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 
 import options, sender, message, generator, server
 import sys, os, signal
