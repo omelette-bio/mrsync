@@ -95,8 +95,6 @@ if os.fork() == 0:
       # receive the message
       (tag,v) = message.receive(fdr1)
       
-      print(tag, file=sys.stderr)
-      
       # verify if the message is an error, if yes, exit
       if tag == "error":
          if args.verbose > 1:
@@ -111,7 +109,7 @@ if os.fork() == 0:
          message.send(fdw2, "error", "Error in files received")
          os.close(fdw2)
          os.close(fdr1)
-         sys.exit(11)
+         sys.exit(21)
          
       # if the message is a tuple, that means we got a file to copy
       if type(v) == tuple:
@@ -155,7 +153,6 @@ if os.fork() == 0:
             os.write(1, data)
             os.close(currentfile)
 
-            break
          if tag == "modifyfile":
             #check if the folder exists, if not create it
             if folder != "":
@@ -298,15 +295,6 @@ if os.fork() == 0:
                   folder = os.path.dirname(file)
             
             message.send(fdw1, "sendfile", (file, folder, data, files[file][2], files[file][3]))
-            # get the answer from the server
-            
-            (tag,v) = message.receive(fdr2)
-            if tag == "error":
-               print(f"Error while sending {file}", file=sys.stderr)
-               os.close(sending_file)
-               os.close(fdw1)
-               os.close(fdr2)
-               sys.exit(11)
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:
@@ -352,7 +340,7 @@ if os.fork() == 0:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
                   
-            message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
+            message.send(fdw1, "modifyfile", (file, folder, data, files[file][3]))
             # get the answer from the server
             
             (tag,v) = message.receive(fdr2)
