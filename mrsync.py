@@ -167,10 +167,6 @@ if os.fork() == 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
             
-            if args.times or args.archive:
-               if args.verbose > 0:
-                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
-               os.utime(file, (modif, modif))
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
@@ -182,7 +178,13 @@ if os.fork() == 0:
             #write the data
             
             os.write(1, data)
+            
             os.close(currentfile)
+            
+            if args.times or args.archive:
+               if args.verbose > 0:
+                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
+               os.utime(file, (modif, modif))
       
       # if the message is fully received, we display a message
       elif tag == "endfile" and args.verbose > 0:
@@ -243,7 +245,6 @@ if os.fork() == 0:
    if send_list != []:
       
       for file in send_list:
-         print(file)
          if len(args.source) > 1:
             file = '/'.join(file.split('/')[1:])
          
@@ -337,17 +338,10 @@ if os.fork() == 0:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
                   
-            message.send(fdw1, "modifyfile", (file, folder, data, files[file][3]))
+            message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
             # get the answer from the server
             
-            (tag,v) = message.receive(fdr2)
-            if tag == "error":
-               if args.verbose > 0:
-                  print(f"Error while sending {file}", file=sys.stderr)
-               os.close(sending_file)
-               os.close(fdw1)
-               os.close(fdr2)
-               sys.exit(11)
+            
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:

@@ -14,6 +14,10 @@ def list_files(path, recursive=False):
    for i in path:
       if i[0] == "." or i[0] == "_" or i[0] == "~":
          pass
+      # if the file is a symbolic link, we skip it and display message "skipping non-regular file"
+      elif os.path.islink(i):
+         print("skipping non-regular file")
+         pass
       elif not os.path.isdir(i):
          files[i] = [os.getcwd(), os.stat(i).st_size, os.stat(i).st_mtime, os.stat(i).st_mode]
       else:
@@ -36,6 +40,10 @@ def list_files(path, recursive=False):
                pass
             elif os.path.isdir(j):
                pass
+            # if the file is a symbolic link, we skip it and display message "skipping non-regular file"
+            elif os.path.islink(j):
+               print("skipping non-regular file")
+               pass
             else:
                files[j] = [os.getcwd(), os.stat(j).st_size, os.stat(j).st_mtime, os.stat(j).st_mode]
    
@@ -51,6 +59,10 @@ def list_files(path, recursive=False):
          for j in os.listdir(directory):
             # add the parent directory to the file name and remove the parent folder from the path if we are in a subdirectory
             if j[0] == "." or j[0] == "_" or j[0] == "~":
+               pass
+            # if the file is a symbolic link, we skip it and display message "skipping non-regular file"
+            elif os.path.islink(j):
+               print("skipping non-regular file")
                pass
             elif os.path.isdir(j):
                if directory[-1] == "/":
