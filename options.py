@@ -7,7 +7,6 @@ parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("source", nargs="+", help="source file or directory")
 parser.add_argument("destination", help="destination file or directory")
 
-
 # options to display or hide program output
 # verbose is a counter, so -v is verbose, -vv is more verbose, etc.
 # and quiet is a boolean, so -q is quiet

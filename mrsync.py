@@ -86,8 +86,12 @@ if os.fork() == 0:
          sys.exit(21)
       
       if type(v) == tuple:
-         file, folder, data, perms = v
-      
+         if args.perms:
+            file, folder, data, perms = v
+         else:
+            file, folder, data = v
+            perms = 33204
+         
          if tag == "sendfile":
             #check if the folder exists, if not create it
             if folder != "":
@@ -101,7 +105,8 @@ if os.fork() == 0:
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
             
             if args.perms:
-               print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
+               if args.verbose > 0:
+                  print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
             
             if args.verbose > 0:
@@ -127,6 +132,11 @@ if os.fork() == 0:
             #create the file
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
+            
+            if args.perms:
+               if args.verbose > 0:
+                  print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
+               os.chmod(file, perms)
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
@@ -290,7 +300,7 @@ if os.fork() == 0:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
                   
-            message.send(fdw1, "modifyfile", (file, folder, data))
+            message.send(fdw1, "modifyfile", (file, folder, data, files[file][3]))
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:
