@@ -61,12 +61,13 @@ if os.fork() == 0:
       if len(delete) > 0:
          message.send(fdw2, "delete", delete)
       
-      if len(send) == 0 and len(modify) == 0:
-         message.send(fdw2, "end", "No files to send or modify")
+      if len(send) == 0 and len(modify) == 0 and len(delete) == 0:
+         message.send(fdw2, "end", "No files to send/modify/delete")
          state = "end"
       
       if state == "send":
-         message.send(fdw2, "end", "No more to send/modify")
+         message.send(fdw2, "end", "No more to send/modify/delete")
+         state = "end"
       
       
       os.close(fdw2)

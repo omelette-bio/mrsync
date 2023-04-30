@@ -32,8 +32,11 @@ def compare(a, b, nb_source):
                list_to_modify.append(file)
          else:
             list_to_send.append(file)
+      # now check if there are files in the destination that are not in the source
       for files in b:
-         print(files)
+         if files not in a:
+            print("zob")
+            list_to_delete.append(files)
          
       
       
