@@ -11,6 +11,7 @@ def all_obj_dir(path):
 def list_files(path, recursive=False):
    files = {}
    directories = []
+   
    for i in path:
       if i[0] == "." or i[0] == "_" or i[0] == "~":
          pass
@@ -34,8 +35,8 @@ def list_files(path, recursive=False):
    
    if all_obj_dir(path) and not recursive:
       for i in directories:
-         os.chdir(i)
-         for j in os.listdir(i):
+         directory = os.chdir(i)
+         for j in os.listdir(directory):
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
             elif os.path.isdir(j):
@@ -97,4 +98,3 @@ if __name__ == "__main__":
    liste = list_files(args.path, args.recursive)
    for i in liste:
       print(i, liste[i])
-   
