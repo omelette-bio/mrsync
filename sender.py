@@ -2,6 +2,7 @@ import filelist, message
 import os
 
 def list_files(path, arguments):
-   file_list = filelist.list_files(path, arguments.recursive)
+   recursive = arguments.recursive | arguments.archive
+   file_list = filelist.list_files(path, recursive)
    return file_list
 

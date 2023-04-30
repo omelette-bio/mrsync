@@ -19,7 +19,7 @@ def receive(fd):
    try:
       tag_size = int.from_bytes(os.read(fd,3),"big")
       tag = os.read(fd,tag_size).decode()
-      size = int.from_bytes(os.read(fd,3),"big")
+      size = int.from_bytes(os.read(fd,4),"big")
       msg = os.read(fd,size)
       return tag,pickle.loads(msg)
    except:

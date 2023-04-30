@@ -1,18 +1,27 @@
 #! /usr/bin/env python3
 
+"""
+program to synchronize files between two directories localy, using pipes
+"""
+
 import options, sender, message, generator, server
 import sys, os, signal
 
+# parse the arhuments
 args = options.parsing()
 
+# if -h or --help is used, print the help and exit
 if args.help:
    options.help()
    sys.exit(0)
 
+# if --list-only is used, list the files and exit
 if args.list_only: 
    options.listing(generator.sort_by_path(sender.list_files(args.source, args)))
    sys.exit(0)
 
+
+# defines the handler for the signals
 def handler(signum, frame):
    global pipes
    print("Interrupted, exiting...", file=sys.stderr)
@@ -31,10 +40,12 @@ fdr2, fdw2 = os.pipe()
 
 #server process, read on fdr1, write on fdw2
 if os.fork() == 0:
+   
    # close unused pipes
    os.close(fdw1)
    os.close(fdr2)
    
+   # create the list of pipes the server uses
    pipes = [fdr1, fdw2]
    
    # create the list of files at the destination
@@ -43,6 +54,7 @@ if os.fork() == 0:
    
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
+
    
    files_to_send = generator.sort_by_path(v)
    # generator to send files
@@ -51,7 +63,7 @@ if os.fork() == 0:
       send, modify, delete = generator.compare(files_to_send, destination_files, len(args.source))
       
       state = "send"
-      # we send some requests to the client, if it's not empty
+      # we send the lists to the client, if it's not empty
       if len(send) > 0:
          message.send(fdw2, "send", send)
 
@@ -61,6 +73,7 @@ if os.fork() == 0:
       if len(delete) > 0:
          message.send(fdw2, "delete", delete)
       
+      # if nothing has to be sent, modified or deleted, we send "end"
       if len(send) == 0 and len(modify) == 0 and len(delete) == 0:
          message.send(fdw2, "end", "No files to send/modify/delete")
          state = "end"
@@ -77,22 +90,36 @@ if os.fork() == 0:
    os.wait()
    
    # now receive the files to copy and the files to modify
-   
    while True:
+      
+      # receive the message
       (tag,v) = message.receive(fdr1)
-      if tag == "timeout":
-         print("Timeout, exiting...", file=sys.stderr)
+      
+      print(tag, file=sys.stderr)
+      
+      # verify if the message is an error, if yes, exit
+      if tag == "error":
+         if args.verbose > 1:
+            print("Timeout, exiting...", file=sys.stderr)
          os.close(fdw2)
          os.close(fdr1)
          sys.exit(21)
       
-      if type(v) == tuple:
-         if args.perms:
-            file, folder, data, perms = v
-         else:
-            file, folder, data = v
-            perms = 33204
+      if tag == "received-nothing":
+         if args.verbose > 1:
+            print("Error in files received, exiting...", file=sys.stderr)
+         message.send(fdw2, "error", "Error in files received")
+         os.close(fdw2)
+         os.close(fdr1)
+         sys.exit(11)
          
+      # if the message is a tuple, that means we got a file to copy
+      if type(v) == tuple:
+         #we split the tuple
+         
+         file, folder, data, modif, perms = v
+         
+         # if the tag is "sendfile", we create the file and write the data in it
          if tag == "sendfile":
             #check if the folder exists, if not create it
             if folder != "":
@@ -105,10 +132,16 @@ if os.fork() == 0:
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
             
-            if args.perms:
+            # if the user wants to copy perms and times, we do it
+            if args.perms or args.archive:
                if args.verbose > 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
+            
+            if args.times or args.archive:
+               if args.verbose > 0:
+                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
+               os.utime(file, (modif, modif))
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
@@ -122,6 +155,7 @@ if os.fork() == 0:
             os.write(1, data)
             os.close(currentfile)
 
+            break
          if tag == "modifyfile":
             #check if the folder exists, if not create it
             if folder != "":
@@ -134,10 +168,15 @@ if os.fork() == 0:
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
             
-            if args.perms:
+            if args.perms or args.archive:
                if args.verbose > 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
+            
+            if args.times or args.archive:
+               if args.verbose > 0:
+                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
+               os.utime(file, (modif, modif))
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
@@ -150,11 +189,13 @@ if os.fork() == 0:
             
             os.write(1, data)
             os.close(currentfile)
-         
+      
+      # if the message is fully received, we display a message
       elif tag == "endfile" and args.verbose > 0:
          print(f"Done", file=sys.stderr)
          print("")
-         
+      
+      # if the message is "end", we exit and change the standard output to the terminal 
       elif tag == "end":
          os.dup2(1, 1)
          break
@@ -237,6 +278,7 @@ if os.fork() == 0:
             except:
                if args.verbose > 0:
                   print(f"Error while reading {file}", file=sys.stderr)
+               message.send(fdw1, "error", "error")
                os.close(sending_file)
                os.close(fdw1)
                os.close(fdr2)
@@ -255,7 +297,16 @@ if os.fork() == 0:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
             
-            message.send(fdw1, "sendfile", (file, folder, data, files[file][3]))
+            message.send(fdw1, "sendfile", (file, folder, data, files[file][2], files[file][3]))
+            # get the answer from the server
+            
+            (tag,v) = message.receive(fdr2)
+            if tag == "error":
+               print(f"Error while sending {file}", file=sys.stderr)
+               os.close(sending_file)
+               os.close(fdw1)
+               os.close(fdr2)
+               sys.exit(11)
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:
@@ -301,7 +352,17 @@ if os.fork() == 0:
                if os.path.dirname(file) != "":
                   folder = os.path.dirname(file)
                   
-            message.send(fdw1, "modifyfile", (file, folder, data, files[file][3]))
+            message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
+            # get the answer from the server
+            
+            (tag,v) = message.receive(fdr2)
+            if tag == "error":
+               if args.verbose > 0:
+                  print(f"Error while sending {file}", file=sys.stderr)
+               os.close(sending_file)
+               os.close(fdw1)
+               os.close(fdr2)
+               sys.exit(11)
             
             # send "endfile" if there the file has been read entirely
             if len(data) < 16*1024*1024:
