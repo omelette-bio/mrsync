@@ -8,7 +8,7 @@ def all_obj_dir(path):
    return all
 
 # path is a list of paths and files to list, if recursive is true, list all files in subdirectories
-def list_files(path, recursive=False):
+def list_files(path, args, recursive=False):
    files = {}
    directories = []
    

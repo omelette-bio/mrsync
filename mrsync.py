@@ -60,7 +60,7 @@ if os.fork() == 0:
    # generator to send files
    if os.fork() == 0:
       # create the list of files to send, modify and delete
-      send, modify, delete = generator.compare(files_to_send, destination_files, len(args.source))
+      send, modify, delete = generator.compare(files_to_send, destination_files, args)
       
       state = "send"
       # we send the lists to the client, if it's not empty

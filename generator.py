@@ -8,17 +8,18 @@ def sort_by_path(dictionnary):
 
 
 # function to compare two lists of files and return the list of files to send, modify and delete
-def compare(a, b, nb_source):
+def compare(a, b, args):
    list_to_send = []
    list_to_modify = []
    list_to_delete = []
-   if nb_source == 1:
+   if len(args.source) == 1:
       for i in a:
          if i in b:
             if a[i][2] > b[i][2]:
                list_to_modify.append(i)
-            elif a[i][3] != b[i][3]:
-               list_to_modify.append(i)
+            elif args.perms or args.archive:
+               if a[i][3] != b[i][3]:
+                  list_to_modify.append(i)
          else:
             list_to_send.append(i)
       for i in b:
