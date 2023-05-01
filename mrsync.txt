@@ -262,7 +262,7 @@ OPTIONS
               starting to use mrsync after using another mirroring system which
               may not preserve timestamps exactly.
        
-       --existing, --ignore-non-existing
+       --existing
               This  tells mrsync to skip creating files (including directories)
               that do not exist yet on the destination.   If  this  option  is
               combined  with  the  --ignore-existing  option, no files will be
@@ -301,44 +301,6 @@ OPTIONS
               try to list such an arg without using this option.  For example:
 
                   mrsync -av --list-only foo* dest/
-
-
-
-
-
-
-
-
-
-
-
-
-
-       -d, --dirs
-              Tell the sending  side  to  include  any  directories  that  are
-              encountered.  Unlike --recursive, a directory's contents are not
-              copied unless the directory name specified is "." or ends with a
-              trailing  slash (e.g. ".", "dir/.", "dir/", etc.).  Without this
-              option or the --recursive option, mrsync will skip  all  directo-
-              ries it encounters (and output a message to that effect for each
-              one).  If you specify both --dirs and  --recursive,  --recursive
-              takes precedence.
-
-
-       -H, --hard-links
-              This  tells  mrsync to look for hard-linked files in the transfer
-              and link together the corresponding files on the receiving side.
-              Without  this  option,  hard-linked  files  in  the transfer are
-              treated as though they were separate files.
-
-              Note that mrsync can only detect hard links if both parts of  the
-              link are in the list of files being sent.
-
-
-
-
-
-
 
 
 
@@ -391,7 +353,8 @@ SEE ALSO
 BUGS
        If verbose is enabled, the command line has some problems and you have to press enter to continue when the process is finished.
        If you want to send a list of files, if it's not on the current working directory, you must type it's full path (e.g. don't type ../file, but /home/user/file)
-       The -t option does not work very well
+       The exit code is not always correct.
+       The combo --delete --ignore-existing --exists may not work.
 
 
 INTERNAL OPTIONS
