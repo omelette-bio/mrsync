@@ -131,24 +131,24 @@ OPTIONS SUMMARY
        Here is a short summary of the options available in mrsync. Please refer
        to the detailed description below for a complete description.
 
+        -h, --help                  show this help
         -v, --verbose               increase verbosity
         -a, --archive               archive mode; same as -rpt (no -H)
         -r, --recursive             recurse into directories
         -p, --perms                 preserve permissions
-        -t, --times                 preserve times
+        -I, --ignore-times          don't skip files that match size and time
+            --size-only             skip files that match in size
+            --existing              skip creating new files on receiver
+            --ignore-existing       skip updating files that exist on receiver
             --delete                delete extraneous files from dest dirs
             --list-only             list the files instead of copying them
-        -h, --help                  show this help
 
+        -t, --times                 preserve times
         -q, --quiet                 suppress non-error messages
         -u, --update                skip files that are newer on the receiver
         -d, --dirs                  transfer directories without recursing
         -H, --hard-links            preserve hard links
-            --existing              skip creating new files on receiver
-            --ignore-existing       skip updating files that exist on receiver
             --force                 force deletion of dirs even if not empty
-        -I, --ignore-times          don't skip files that match size and time
-            --size-only             skip files that match in size
 
 
 
@@ -177,28 +177,6 @@ OPTIONS
               just  the  name of the file. At the single -v level of verbosity, 
               this does not mention when a file gets its attributes changed.             
 
-       -q, --quiet
-              This  option  decreases  the amount of information you are given
-              during the transfer, notably  suppressing  information  messages
-              from  the remote server. This flag is useful when invoking mrsync
-              from cron.
-
-
-       -I, --ignore-times
-              Normally  mrsync  will  skip  any files that are already the same
-              size and have the same  modification  time-stamp.   This  option
-              turns  off  this "quick check" behavior, causing all files to be
-              updated.
-
-
-       --size-only
-              Normally mrsync will not transfer any files that are already  the
-              same  size  and  have the same modification time-stamp. With the
-              --size-only option, files will not be transferred if  they  have
-              the  same  size,  regardless  of  timestamp. This is useful when
-              starting to use mrsync after using another mirroring system which
-              may not preserve timestamps exactly.
-
        -a, --archive
               This is equivalent to -rpt. It is a quick way of saying  you
               want  recursion  and want to preserve almost everything (with -H
@@ -206,50 +184,11 @@ OPTIONS
 
               Note that -a does not preserve hardlinks, because finding multi-
               ply-linked  files is expensive.  You must separately specify -H.
-
-
-       --no-OPTION
-              You may turn off one or more implied options  by  prefixing  the
-              option  name with "no-".  Not all options may be prefixed with a
-              "no-": only options that are  implied  by  other  options or have 
-              different defaults in various circumstances 
-              (e.g. --no-dirs).
-              You  may  specify either the short or the long option name after
-              the "no-" prefix (e.g. --no-r is the same as --no-recursive).
-
+       
        -r, --recursive
               This  tells  mrsync  to  copy  directories recursively.  See also
               --dirs (-d).
-
-       -u, --update
-              This  forces mrsync to skip any files which exist on the destina-
-              tion and have a modified time that  is  newer  than  the  source
-              file.   (If an existing destination file has a modify time equal
-              to the source file's, it will be updated if the sizes  are  dif-
-              ferent.)
-
-
-       -d, --dirs
-              Tell the sending  side  to  include  any  directories  that  are
-              encountered.  Unlike --recursive, a directory's contents are not
-              copied unless the directory name specified is "." or ends with a
-              trailing  slash (e.g. ".", "dir/.", "dir/", etc.).  Without this
-              option or the --recursive option, mrsync will skip  all  directo-
-              ries it encounters (and output a message to that effect for each
-              one).  If you specify both --dirs and  --recursive,  --recursive
-              takes precedence.
-
-
-       -H, --hard-links
-              This  tells  mrsync to look for hard-linked files in the transfer
-              and link together the corresponding files on the receiving side.
-              Without  this  option,  hard-linked  files  in  the transfer are
-              treated as though they were separate files.
-
-              Note that mrsync can only detect hard links if both parts of  the
-              link are in the list of files being sent.
-
-
+       
        -p, --perms
               This  option  causes  the receiving mrsync to set the destination
               permissions to be the same as the source permissions.  (See also
@@ -284,18 +223,22 @@ OPTIONS
               permission bits for newly-created files when  --perms  was  off,
               while  overriding  the  destination's  setgid  bit  setting on a
               newly-created directory.
+       
+       -I, --ignore-times
+              Normally  mrsync  will  skip  any files that are already the same
+              size and have the same  modification  time-stamp.   This  option
+              turns  off  this "quick check" behavior, causing all files to be
+              updated.
 
 
-       -t, --times
-              This tells mrsync to transfer modification times along  with  the
-              files  and  update them on the remote system.  Note that if this
-              option is not used, the optimization that  excludes  files  that
-              have  not  been  modified cannot be effective; in other words, a
-              missing -t or -a will cause the next transfer to behave as if it
-              used -I, causing all files to be updated (though the mrsync algo-
-              rithm will make the update fairly efficient if the files haven't
-              actually changed, you're much better off using -t).
-
+       --size-only
+              Normally mrsync will not transfer any files that are already  the
+              same  size  and  have the same modification time-stamp. With the
+              --size-only option, files will not be transferred if  they  have
+              the  same  size,  regardless  of  timestamp. This is useful when
+              starting to use mrsync after using another mirroring system which
+              may not preserve timestamps exactly.
+       
        --existing, --ignore-non-existing
               This  tells mrsync to skip creating files (including directories)
               that do not exist yet on the destination.   If  this  option  is
@@ -308,8 +251,7 @@ OPTIONS
               This  tells  mrsync  to skip updating files that already exist on
               the destination (this does not ignore  existing  directores,  or
               nothing would get done).  See also --existing.
-
-
+       
        --delete
               This  tells  mrsync to delete extraneous files from the receiving
               side (ones that aren't on the sending side), but  only  for  the
@@ -322,39 +264,6 @@ OPTIONS
 
               This option has no effect unless either --recursive or --dirs 
               (-d) is set, but only for  directories whose contents are being copied.
-
-       --force
-              This  option tells mrsync to delete a non-empty directory when it
-              is to be replaced by a non-directory.  This is only relevant  if
-              deletions are not active (see --delete for details).
-
-
-       --timeout=TIMEOUT
-              This option allows you to set a maximum I/O timeout in  seconds.
-              If no data is transferred for the specified time then mrsync will
-              exit. The default is 0, which means no timeout.
-
-       --blocking-io
-              This tells rsync to use blocking I/O  when  launching  a  remote
-              shell  transport.   It  defaults  to
-              using  non-blocking  I/O.   (Note  that ssh prefers non-blocking
-              I/O.)
-
-
-
-       --address
-              By default mrsync will bind to the wildcard address when connect-
-              ing  to  an  mrsync  daemon.   The --address option allows you to
-              specify a specific IP address (or hostname)  to  bind  to.   See
-              also this option in the --daemon mode section.
-
-
-       --port=PORT
-              This  specifies  an alternate TCP port number to use rather than
-              the default of 873.  This is only needed if you  are  using  the
-              double-colon  (::) syntax to connect with an mrsync daemon (since
-              the URL syntax has a way to specify the port as a  part  of  the
-              URL).  See also this option in the --daemon mode section.
 
 
        --list-only
@@ -369,6 +278,65 @@ OPTIONS
               try to list such an arg without using this option.  For example:
 
                   mrsync -av --list-only foo* dest/
+
+
+
+
+
+
+       -q, --quiet
+              This  option  decreases  the amount of information you are given
+              during the transfer, notably  suppressing  information  messages
+              from  the remote server. This flag is useful when invoking mrsync
+              from cron.
+
+
+
+
+
+       -u, --update
+              This  forces mrsync to skip any files which exist on the destina-
+              tion and have a modified time that  is  newer  than  the  source
+              file.   (If an existing destination file has a modify time equal
+              to the source file's, it will be updated if the sizes  are  dif-
+              ferent.)
+
+
+       -d, --dirs
+              Tell the sending  side  to  include  any  directories  that  are
+              encountered.  Unlike --recursive, a directory's contents are not
+              copied unless the directory name specified is "." or ends with a
+              trailing  slash (e.g. ".", "dir/.", "dir/", etc.).  Without this
+              option or the --recursive option, mrsync will skip  all  directo-
+              ries it encounters (and output a message to that effect for each
+              one).  If you specify both --dirs and  --recursive,  --recursive
+              takes precedence.
+
+
+       -H, --hard-links
+              This  tells  mrsync to look for hard-linked files in the transfer
+              and link together the corresponding files on the receiving side.
+              Without  this  option,  hard-linked  files  in  the transfer are
+              treated as though they were separate files.
+
+              Note that mrsync can only detect hard links if both parts of  the
+              link are in the list of files being sent.
+
+
+
+
+       -t, --times
+              This tells mrsync to transfer modification times along  with  the
+              files  and  update them on the remote system.  Note that if this
+              option is not used, the optimization that  excludes  files  that
+              have  not  been  modified cannot be effective; in other words, a
+              missing -t or -a will cause the next transfer to behave as if it
+              used -I, causing all files to be updated (though the mrsync algo-
+              rithm will make the update fairly efficient if the files haven't
+              actually changed, you're much better off using -t).
+
+
+
 
 
 
@@ -407,23 +375,12 @@ EXIT VALUES
 
        3      Errors selecting input/output files, dirs
 
-       5      Error starting client-server protocol
-
-       10     Error in socket I/O
-
        11     Error in file I/O
 
        12     Error in mrsync protocol data stream
 
        20     Received SIGUSR1 or SIGINT
 
-       21     Some error returned by waitpid()
-
-       23     Partial transfer due to error
-
-       24     Partial transfer due to vanished source files
-
-       30     Timeout in data send/receive
 
 
 SEE ALSO

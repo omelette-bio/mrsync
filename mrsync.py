@@ -16,8 +16,9 @@ if args.help:
    sys.exit(0)
 
 # if --list-only is used, list the files and exit
-if args.list_only: 
-   options.listing(generator.sort_by_path(sender.list_files(args.source, args)))
+if args.list_only:
+   file_dict, dirs = sender.list_files(args.source, args)
+   options.listing(generator.sort_by_path(file_dict))
    sys.exit(0)
 
 
@@ -99,7 +100,7 @@ if os.fork() == 0:
    os.wait()
    
    # now receive the files to copy and the files to modify
-   while True:
+   while pipe_state == "on":
       
       # receive the message
       (tag,v) = message.receive(fdr1)
@@ -377,6 +378,9 @@ if os.fork() == 0:
    if pipe_state == "on":
       os.close(fdw1)
       os.close(fdr2)
-   sys.exit(0)
+      sys.exit(0)
+   
+   else:
+      sys.exit(20)
 
 sys.exit(0)
