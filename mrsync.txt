@@ -133,9 +133,12 @@ OPTIONS SUMMARY
 
         -h, --help                  show this help
         -v, --verbose               increase verbosity
+        -q, --quiet                 suppress non-error messages
+        -u, --update                skip files that are newer on the receiver
         -a, --archive               archive mode; same as -rpt (no -H)
         -r, --recursive             recurse into directories
         -p, --perms                 preserve permissions
+        -t, --times                 preserve times
         -I, --ignore-times          don't skip files that match size and time
             --size-only             skip files that match in size
             --existing              skip creating new files on receiver
@@ -143,9 +146,6 @@ OPTIONS SUMMARY
             --delete                delete extraneous files from dest dirs
             --list-only             list the files instead of copying them
 
-        -t, --times                 preserve times
-        -q, --quiet                 suppress non-error messages
-        -u, --update                skip files that are newer on the receiver
         -d, --dirs                  transfer directories without recursing
         -H, --hard-links            preserve hard links
             --force                 force deletion of dirs even if not empty
@@ -176,6 +176,19 @@ OPTIONS
               Note that the names of the transferred files that are output are
               just  the  name of the file. At the single -v level of verbosity, 
               this does not mention when a file gets its attributes changed.             
+
+       -q, --quiet
+              This  option  decreases  the amount of information you are given
+              during the transfer, notably  suppressing  information  messages
+              from  the remote server. This flag is useful when invoking mrsync
+              from cron.
+       
+       -u, --update
+              This  forces mrsync to skip any files which exist on the destina-
+              tion and have a modified time that  is  newer  than  the  source
+              file.   (If an existing destination file has a modify time equal
+              to the source file's, it will be updated if the sizes  are  dif-
+              ferent.)
 
        -a, --archive
               This is equivalent to -rpt. It is a quick way of saying  you
@@ -223,6 +236,16 @@ OPTIONS
               permission bits for newly-created files when  --perms  was  off,
               while  overriding  the  destination's  setgid  bit  setting on a
               newly-created directory.
+       
+       -t, --times
+              This tells mrsync to transfer modification times along  with  the
+              files  and  update them on the remote system.  Note that if this
+              option is not used, the optimization that  excludes  files  that
+              have  not  been  modified cannot be effective; in other words, a
+              missing -t or -a will cause the next transfer to behave as if it
+              used -I, causing all files to be updated (though the mrsync algo-
+              rithm will make the update fairly efficient if the files haven't
+              actually changed, you're much better off using -t).
        
        -I, --ignore-times
               Normally  mrsync  will  skip  any files that are already the same
@@ -284,22 +307,11 @@ OPTIONS
 
 
 
-       -q, --quiet
-              This  option  decreases  the amount of information you are given
-              during the transfer, notably  suppressing  information  messages
-              from  the remote server. This flag is useful when invoking mrsync
-              from cron.
 
 
 
 
 
-       -u, --update
-              This  forces mrsync to skip any files which exist on the destina-
-              tion and have a modified time that  is  newer  than  the  source
-              file.   (If an existing destination file has a modify time equal
-              to the source file's, it will be updated if the sizes  are  dif-
-              ferent.)
 
 
        -d, --dirs
@@ -325,15 +337,6 @@ OPTIONS
 
 
 
-       -t, --times
-              This tells mrsync to transfer modification times along  with  the
-              files  and  update them on the remote system.  Note that if this
-              option is not used, the optimization that  excludes  files  that
-              have  not  been  modified cannot be effective; in other words, a
-              missing -t or -a will cause the next transfer to behave as if it
-              used -I, causing all files to be updated (though the mrsync algo-
-              rithm will make the update fairly efficient if the files haven't
-              actually changed, you're much better off using -t).
 
 
 

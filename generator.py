@@ -26,7 +26,11 @@ def compare(a, b, args):
             else:
                if a[i][2] == b[i][2] and a[i][1] == b[i][1]:
                   pass
-               elif a[i][2] > b[i][2] or a[i][1] > b[i][1]:
+               # if --update is specified, we compare the modification time of the files, if the destination is older
+               elif args.update:
+                  if a[i][2] > b[i][2]:
+                     list_to_modify.append(i)
+               elif a[i][2] != b[i][2] or a[i][1] != b[i][1]:
                   list_to_modify.append(i)
                elif args.perms or args.archive:
                   if a[i][3] != b[i][3]:
