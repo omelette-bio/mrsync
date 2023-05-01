@@ -10,10 +10,14 @@ import sys, os, signal
 # parse the arhuments
 args = options.parsing()
 
+
+
 # if -h or --help is used, print the help and exit
 if args.help:
    options.help()
    sys.exit(0)
+
+
 
 # if --list-only is used, list the files and exit
 if args.list_only:
@@ -33,15 +37,22 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGUSR1, handler)
 
+
+
 # connect to server with pipe
 # fork to create a child process which will be the server
 
 fdr1, fdw1 = os.pipe()
 fdr2, fdw2 = os.pipe()
 
+
+
 #server process, read on fdr1, write on fdw2
 if os.fork() == 0:
+   
+   # store the state of the pipe
    pipe_state = "on"
+   
    # close unused pipes
    os.close(fdw1)
    os.close(fdr2)
@@ -51,24 +62,44 @@ if os.fork() == 0:
    
    
    # when starting, send the pid to the client
-   
    message.send(fdw2, "pid", os.getpid())
    pid_client = message.receive(fdr1)[1]
+   
+   
    if args.verbose > 1:
       print("Client pid: ", pid_client, file=sys.stderr)
    
+   
+   
    # create the list of files at the destination
    os.chdir(args.destination)
-   destination_files, dirs = sender.list_files(".", args)
+   
+   # we try to create the list of files at the destination
+   try:
+      destination_files, dirs = sender.list_files(".", args)
+   # if it fails, we send a signal to the client and exit
+   except:
+      print("Error while creating server file list", file=sys.stderr)
+      os.kill(pid_client, signal.SIGUSR1)
+      os.close(fdr1)
+      os.close(fdw2)
+      sys.exit(3)
+   
+   # we sort the list of files
    destination_files = generator.sort_by_path(destination_files)
+   
    
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
 
-   
+
+   # we sort the list of files to send
    files_to_send = generator.sort_by_path(v)
+
+   
    # generator to send files
    if os.fork() == 0:
+      
       # create the list of files to send, modify and delete
       send, modify, delete = generator.compare(files_to_send, destination_files, args)
       
@@ -92,10 +123,11 @@ if os.fork() == 0:
          message.send(fdw2, "end", "No more to send/modify/delete")
          state = "end"
       
-      
+      # and then, we close the pipes and exit
       os.close(fdw2)
       os.close(fdr1)
       sys.exit(0)
+   
    
    os.wait()
    
@@ -105,30 +137,24 @@ if os.fork() == 0:
       # receive the message
       (tag,v) = message.receive(fdr1)
       
-      # verify if the message is an error, if yes, exit
-      if tag == "error":
-         if args.verbose > 1:
-            print("Timeout, exiting...", file=sys.stderr)
-         
-         os.close(fdw2)
-         os.close(fdr1)
-         sys.exit(21)
-      
+      # if there is a problem in the files received, we send a signal to the client and exit
       if tag == "received-nothing":
          print("Error in files received, exiting...", file=sys.stderr)
          os.kill(pid_client, signal.SIGUSR1)
          os.close(fdw2)
          os.close(fdr1)
-         sys.exit(22)
+         sys.exit(11)
+      
       
       # if the message is a tuple, that means we got a file to copy
       if type(v) == tuple:
-         #we split the tuple
          
+         #we split the tuple 
          file, folder, data, modif, perms = v
          
          # if the tag is "sendfile", we create the file and write the data in it
          if tag == "sendfile":
+            
             #check if the folder exists, if not create it
             if folder != "":
                if not os.path.isdir(folder):
@@ -145,25 +171,30 @@ if os.fork() == 0:
                if args.verbose > 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
-            
-            if args.times or args.archive:
-               if args.verbose > 0:
-                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
-               os.utime(file, (modif, modif))
+
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
             
-            #change the standard output to the file
             
+            #change the standard output to the file
             os.dup2(currentfile, 1)
             
-            #write the data
             
+            #write the data
             os.write(1, data)
             os.close(currentfile)
 
+            # if the user wants to copy times, we do it
+            if args.times or args.archive:
+               if args.verbose > 0:
+                  print(f"Changing times of {file} to {modif}", file=sys.stderr)
+               os.utime(file, (modif, modif))
+
+
+
          if tag == "modifyfile":
+            
             #check if the folder exists, if not create it
             if folder != "":
                if not os.path.isdir(folder):
@@ -175,6 +206,7 @@ if os.fork() == 0:
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
             
+            # if the user wants to copy perms, we do it
             if args.perms or args.archive:
                if args.verbose > 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
@@ -184,16 +216,15 @@ if os.fork() == 0:
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
             
-            #change the standard output to the file
             
+            #change the standard output to the file
             os.dup2(currentfile, 1)
             
             #write the data
-            
             os.write(1, data)
-            
             os.close(currentfile)
             
+            # if the user wants to copy times, we do it
             if args.times or args.archive:
                if args.verbose > 0:
                   print(f"Changing times of {file} to {modif}", file=sys.stderr)
@@ -208,30 +239,48 @@ if os.fork() == 0:
       elif tag == "end":
          os.dup2(1, 1)
          break
-      
+   
+   # close the pipes
    if pipe_state == "on":
       os.close(fdw2)
       os.close(fdr1)
-   sys.exit(0)
+      sys.exit(0)
+   else:
+      sys.exit(20)
 
 
 #client process, read on fdr2, write on fdw1
 if os.fork() == 0:
+   
    pipe_state = "on"
    # close the unnecessary pipes
    os.close(fdw2)
    os.close(fdr1)
+   # then store the pipes in a list, to close it with a loop
    pipes = [fdr2, fdw1]
    
+   # get the pid of the server, then send our pid to the server
    pid_server = message.receive(fdr2)[1]
    message.send(fdw1, "pid", os.getpid())
+   
    if args.verbose > 1:
       print(f"Server pid : {pid_server}")
    
+   
    # create the list of files at the source
-   files, dirs = sender.list_files(args.source, args)
+   try:
+      files, dirs = sender.list_files(args.source, args)
+   # if there is an error, we exit
+   except:
+      print("Error while creating Client's file list, exiting...", file=sys.stderr)
+      os.kill(pid_server, signal.SIGUSR1)
+      os.close(fdr2)
+      os.close(fdw1)
+      sys.exit(3)
+      
    # and send it to the server
    message.send(fdw1, "data", files)
+   
    # wait for request messages from the generator
    tag = ""
    send_list = []
@@ -245,12 +294,15 @@ if os.fork() == 0:
          print(f"{tag} : {v}")
          print("")
          
+      # if the message is a list of files to send, we store it
       if tag == "send":
          send_list = v
       
+      # if the message is a list of files to modify, we store it
       elif tag == "modify":
          modify_list = v
-   
+
+      # if the message is a list of files to delete, we delete them
       elif tag == "delete" and args.delete:
          server.order_list_delete(v)
          for file in v:
@@ -264,31 +316,43 @@ if os.fork() == 0:
    if send_list != []:
       
       for file in send_list:
+         
+         # we verify each time if the pipe is still open, if not it means the server has crashed or exited
          if pipe_state == "on":
+            
+            # if there are multiple sources, we remove the first folder of the path
             if len(args.source) > 1:
                file = '/'.join(file.split('/')[1:])
             
+            # we get the full path of the file
             full_path = os.path.join(files[file][0], file)
             
             if args.verbose > 0:
                print(f"Sending : {full_path}")
             
+            # and then we try to open it
             try:
                sending_file = os.open(full_path, os.O_RDONLY)
+            # if it's impossible, we exit
             except:
                print(f"Error while opening {file}", file=sys.stderr)
+               os.kill(pid_server, signal.SIGUSR1)
                os.close(fdw1)
                os.close(fdr2)
-               sys.exit(23)
-               
+               sys.exit(11)
+            
             if args.verbose > 0:
                print(f"Reading...")
                print("")
-               
-            # read the file and send it, in multiple parts if size > 16 Mo
+            
+            
+            # if we opened the file successfully, read the file and send it, in multiple parts if size > 16 Mo
             while True:
+               
+               # we try to read the file
                try:
                   data = os.read(sending_file, 16*1024*1024)
+               # if it's impossible, we exit
                except:
                   print(f"Error while reading {file}", file=sys.stderr)
                   os.kill(pid_server, signal.SIGUSR1)
@@ -297,6 +361,7 @@ if os.fork() == 0:
                   os.close(fdr2)
                   sys.exit(11)
                
+               # we calculate the folder of the file
                folder = ""
                
                if len(args.source) > 1 and sender.all_path_dir(args.source):
@@ -310,6 +375,7 @@ if os.fork() == 0:
                   if os.path.dirname(file) != "":
                      folder = os.path.dirname(file)
                
+               # and then we send the file, with the name, the folder, the content, the size, the last modification date and permissions
                message.send(fdw1, "sendfile", (file, folder, data, files[file][2], files[file][3]))
                
                # send "endfile" if there the file has been read entirely
@@ -317,21 +383,38 @@ if os.fork() == 0:
                   message.send(fdw1, "endfile", "endfile")
                   break
             
+            # and then we close the file
             os.close(sending_file)
-      
+   
+   # the modifying system is the same as the sending system, because it's in case we create the way to send only the modifications
    if modify_list != []:
       
+      # iterate over the list of files to modify
       for file in modify_list:
+         
+         # we verify each time if the pipe is still open, if not it means the server has crashed or exited
          if pipe_state == "on":
+            
+            # if there are multiple sources, we remove the first folder of the path
             if len(args.source) > 1:
                file = '/'.join(file.split('/')[1:])
             
+            # we get the full path of the file
             full_path = os.path.join(files[file][0], file)
             
             if args.verbose > 0:
                print(f"Sending : {full_path}")
                
-            sending_file = os.open(full_path, os.O_RDONLY)
+            # and then we try to open it
+            try:
+               sending_file = os.open(full_path, os.O_RDONLY)
+            # if it's impossible, we exit
+            except:
+               print(f"Error while opening {file}", file=sys.stderr)
+               os.kill(pid_server, signal.SIGUSR1)
+               os.close(fdw1)
+               os.close(fdr2)
+               sys.exit(11)
             
             if args.verbose > 0:
                print(f"Reading...")
@@ -339,8 +422,20 @@ if os.fork() == 0:
                
             # read the file and send it, in multiple parts if size > 16 Mo
             while True:
-               data = os.read(sending_file, 16*1024*1024)
                
+               # we try to read the file
+               try:
+                  data = os.read(sending_file, 16*1024*1024)
+               # if it's impossible, we exit
+               except:
+                  print(f"Error while reading {file}", file=sys.stderr)
+                  os.kill(pid_server, signal.SIGUSR1)
+                  os.close(sending_file)
+                  os.close(fdw1)
+                  os.close(fdr2)
+                  sys.exit(11)
+
+               # we calculate the folder of the file
                folder = ""
                
                if len(args.source) > 1:
@@ -353,33 +448,37 @@ if os.fork() == 0:
                else:
                   if os.path.dirname(file) != "":
                      folder = os.path.dirname(file)
-                     
+               
+               # then we send the file, with the name, the folder, the content, the size, the last modification date and permissions
                message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
-               # get the answer from the server
-               
-               
                
                # send "endfile" if there the file has been read entirely
                if len(data) < 16*1024*1024:
                   message.send(fdw1, "endfile", "endfile")
                   break
             
+            # and then we close the file
             os.close(sending_file)   
    
+   # beginning of try to create the option --dirs
    if dirs != []:
       for i in dirs:
          message.send(fdw1, "mkdir", i)
    
+   # if there are no files to send, we send "end" to the server
    if modify_list == [] and send_list == []:
       message.send(fdw1, "end", "end")
    
+   # when we have sent all the files, we send "end" to the server
    message.send(fdw1, "end", "end")
    
+   # finally we close the pipes, and exit
    if pipe_state == "on":
       os.close(fdw1)
       os.close(fdr2)
       sys.exit(0)
    
+   # if the pipe is closed, it means the server has crashed or exited
    else:
       sys.exit(20)
 

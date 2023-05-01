@@ -34,7 +34,6 @@ def compare(a, b, args):
          elif not args.existing:
             list_to_send.append(i)
       
-      
       for i in b:
          if i not in a:
             list_to_delete.append(i)

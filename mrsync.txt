@@ -377,8 +377,6 @@ EXIT VALUES
 
        11     Error in file I/O
 
-       12     Error in mrsync protocol data stream
-
        20     Received SIGUSR1 or SIGINT
 
 
@@ -389,7 +387,8 @@ SEE ALSO
 
 BUGS
        If verbose is enabled, the command line has some problems and you have to press enter to continue when the process is finished.
-       If you want to send a list of files, if it's not on the current working directory, you must type it's full path
+       If you want to send a list of files, if it's not on the current working directory, you must type it's full path (e.g. don't type ../file, but /home/user/file)
+       The -t option does not work very well
 
 
 INTERNAL OPTIONS
