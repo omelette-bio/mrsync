@@ -38,7 +38,6 @@ def compare(a, b, args):
       # now check if there are files in the destination that are not in the source
       for files in b:
          if files not in a:
-            print("zob")
             list_to_delete.append(files)
          
       

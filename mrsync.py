@@ -23,11 +23,11 @@ if args.list_only:
 
 # defines the handler for the signals
 def handler(signum, frame):
-   global pipes
-   print("Interrupted, exiting...", file=sys.stderr)
+   global pipes, pipe_state
+   print(f"Interrupted {os.getpid()}, exiting...", file=sys.stderr)
    for fd in pipes:
       os.close(fd)
-   sys.exit(20)
+   pipe_state = "off"
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGUSR1, handler)
@@ -40,7 +40,7 @@ fdr2, fdw2 = os.pipe()
 
 #server process, read on fdr1, write on fdw2
 if os.fork() == 0:
-   
+   pipe_state = "on"
    # close unused pipes
    os.close(fdw1)
    os.close(fdr2)
@@ -48,9 +48,18 @@ if os.fork() == 0:
    # create the list of pipes the server uses
    pipes = [fdr1, fdw2]
    
+   
+   # when starting, send the pid to the client
+   
+   message.send(fdw2, "pid", os.getpid())
+   pid_client = message.receive(fdr1)[1]
+   if args.verbose > 1:
+      print("Client pid: ", pid_client, file=sys.stderr)
+   
    # create the list of files at the destination
    os.chdir(args.destination)
-   destination_files = generator.sort_by_path(sender.list_files(".", args))
+   destination_files, dirs = sender.list_files(".", args)
+   destination_files = generator.sort_by_path(destination_files)
    
    # receive the list of files to send
    (tag,v) = message.receive(fdr1)
@@ -99,15 +108,18 @@ if os.fork() == 0:
       if tag == "error":
          if args.verbose > 1:
             print("Timeout, exiting...", file=sys.stderr)
+         
          os.close(fdw2)
          os.close(fdr1)
          sys.exit(21)
       
       if tag == "received-nothing":
-         if args.verbose > 1:
-            print("Error in files received, skipping", file=sys.stderr)
-         continue
-         
+         print("Error in files received, exiting...", file=sys.stderr)
+         os.kill(pid_client, signal.SIGUSR1)
+         os.close(fdw2)
+         os.close(fdr1)
+         sys.exit(22)
+      
       # if the message is a tuple, that means we got a file to copy
       if type(v) == tuple:
          #we split the tuple
@@ -196,21 +208,27 @@ if os.fork() == 0:
          os.dup2(1, 1)
          break
       
-   
-   os.close(fdw2)
-   os.close(fdr1)
+   if pipe_state == "on":
+      os.close(fdw2)
+      os.close(fdr1)
    sys.exit(0)
 
 
 #client process, read on fdr2, write on fdw1
 if os.fork() == 0:
+   pipe_state = "on"
    # close the unnecessary pipes
    os.close(fdw2)
    os.close(fdr1)
    pipes = [fdr2, fdw1]
    
+   pid_server = message.receive(fdr2)[1]
+   message.send(fdw1, "pid", os.getpid())
+   if args.verbose > 1:
+      print(f"Server pid : {pid_server}")
+   
    # create the list of files at the source
-   files = sender.list_files(args.source, args)
+   files, dirs = sender.list_files(args.source, args)
    # and send it to the server
    message.send(fdw1, "data", files)
    # wait for request messages from the generator
@@ -245,118 +263,120 @@ if os.fork() == 0:
    if send_list != []:
       
       for file in send_list:
-         if len(args.source) > 1:
-            file = '/'.join(file.split('/')[1:])
-         
-         full_path = os.path.join(files[file][0], file)
-         
-         if args.verbose > 0:
-            print(f"Sending : {full_path}")
-         
-         try:
-            sending_file = os.open(full_path, os.O_RDONLY)
-         except:
+         if pipe_state == "on":
+            if len(args.source) > 1:
+               file = '/'.join(file.split('/')[1:])
+            
+            full_path = os.path.join(files[file][0], file)
+            
             if args.verbose > 0:
-               print(f"Error while opening {file}", file=sys.stderr)
-            os.close(fdw1)
-            os.close(fdr2)
-            sys.exit(23)
+               print(f"Sending : {full_path}")
             
-         if args.verbose > 0:
-            print(f"Reading...")
-            print("")
-            
-         # read the file and send it, in multiple parts if size > 16 Mo
-         while True:
             try:
-               data = os.read(sending_file, 16*1024*1024)
+               sending_file = os.open(full_path, os.O_RDONLY)
             except:
-               if args.verbose > 0:
-                  print(f"Error while reading {file}", file=sys.stderr)
-               message.send(fdw1, "error", "error")
-               os.close(sending_file)
+               print(f"Error while opening {file}", file=sys.stderr)
                os.close(fdw1)
                os.close(fdr2)
-               sys.exit(11)
-            
-            folder = ""
-            
-            if len(args.source) > 1:
-               if os.path.dirname(file) == "":
-                  folder = os.path.basename(files[file][0])
+               sys.exit(23)
+               
+            if args.verbose > 0:
+               print(f"Reading...")
+               print("")
+               
+            # read the file and send it, in multiple parts if size > 16 Mo
+            while True:
+               try:
+                  data = os.read(sending_file, 16*1024*1024)
+               except:
+                  print(f"Error while reading {file}", file=sys.stderr)
+                  os.kill(pid_server, signal.SIGUSR1)
+                  os.close(sending_file)
+                  os.close(fdw1)
+                  os.close(fdr2)
+                  sys.exit(11)
+               
+               folder = ""
+               
+               if len(args.source) > 1 and sender.all_path_dir(args.source):
+                  if os.path.dirname(file) == "":
+                     folder = os.path.basename(files[file][0])
+                  
+                  else:
+                     folder = os.path.join(os.path.basename(files[file][0]), os.path.dirname(file))
                
                else:
-                  folder = os.path.join(os.path.basename(files[file][0]), os.path.dirname(file))
+                  if os.path.dirname(file) != "":
+                     folder = os.path.dirname(file)
+               
+               message.send(fdw1, "sendfile", (file, folder, data, files[file][2], files[file][3]))
+               
+               # send "endfile" if there the file has been read entirely
+               if len(data) < 16*1024*1024:
+                  message.send(fdw1, "endfile", "endfile")
+                  break
             
-            else:
-               if os.path.dirname(file) != "":
-                  folder = os.path.dirname(file)
-            
-            message.send(fdw1, "sendfile", (file, folder, data, files[file][2], files[file][3]))
-            
-            # send "endfile" if there the file has been read entirely
-            if len(data) < 16*1024*1024:
-               message.send(fdw1, "endfile", "endfile")
-               break
-         
-         os.close(sending_file)
-      
-      message.send(fdw1, "end", "end")
+            os.close(sending_file)
       
    if modify_list != []:
       
       for file in modify_list:
-         
-         if len(args.source) > 1:
-            file = '/'.join(file.split('/')[1:])
-         
-         full_path = os.path.join(files[file][0], file)
-         
-         if args.verbose > 0:
-            print(f"Sending : {full_path}")
-            
-         sending_file = os.open(full_path, os.O_RDONLY)
-         
-         if args.verbose > 0:
-            print(f"Reading...")
-            print("")
-            
-         # read the file and send it, in multiple parts if size > 16 Mo
-         while True:
-            data = os.read(sending_file, 16*1024*1024)
-            
-            folder = ""
-            
+         if pipe_state == "on":
             if len(args.source) > 1:
-               if os.path.dirname(file) == "":
-                  folder = os.path.basename(files[file][0])
+               file = '/'.join(file.split('/')[1:])
+            
+            full_path = os.path.join(files[file][0], file)
+            
+            if args.verbose > 0:
+               print(f"Sending : {full_path}")
+               
+            sending_file = os.open(full_path, os.O_RDONLY)
+            
+            if args.verbose > 0:
+               print(f"Reading...")
+               print("")
+               
+            # read the file and send it, in multiple parts if size > 16 Mo
+            while True:
+               data = os.read(sending_file, 16*1024*1024)
+               
+               folder = ""
+               
+               if len(args.source) > 1:
+                  if os.path.dirname(file) == "":
+                     folder = os.path.basename(files[file][0])
+                  
+                  else:
+                     folder = os.path.join(os.path.basename(files[file][0]), os.path.dirname(file))
                
                else:
-                  folder = os.path.join(os.path.basename(files[file][0]), os.path.dirname(file))
+                  if os.path.dirname(file) != "":
+                     folder = os.path.dirname(file)
+                     
+               message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
+               # get the answer from the server
+               
+               
+               
+               # send "endfile" if there the file has been read entirely
+               if len(data) < 16*1024*1024:
+                  message.send(fdw1, "endfile", "endfile")
+                  break
             
-            else:
-               if os.path.dirname(file) != "":
-                  folder = os.path.dirname(file)
-                  
-            message.send(fdw1, "modifyfile", (file, folder, data, files[file][2], files[file][3]))
-            # get the answer from the server
-            
-            
-            
-            # send "endfile" if there the file has been read entirely
-            if len(data) < 16*1024*1024:
-               message.send(fdw1, "endfile", "endfile")
-               break
-         
-         os.close(sending_file)
-      
-      message.send(fdw1, "end", "end")
+            os.close(sending_file)   
+   
+   if dirs != []:
+      for i in dirs:
+         message.send(fdw1, "mkdir", i)
    
    if modify_list == [] and send_list == []:
       message.send(fdw1, "end", "end")
    
-   os.close(fdw1)
-   os.close(fdr2)
+   message.send(fdw1, "end", "end")
+   
+   if pipe_state == "on":
+      os.close(fdw1)
+      os.close(fdr2)
    sys.exit(0)
 
 sys.exit(0)

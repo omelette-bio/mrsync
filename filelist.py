@@ -11,6 +11,7 @@ def all_obj_dir(path):
 def list_files(path, args, recursive=False):
    files = {}
    directories = []
+   directories_list = []
    
    for i in path:
       if i[0] == "." or i[0] == "_" or i[0] == "~":
@@ -20,7 +21,11 @@ def list_files(path, args, recursive=False):
          print("skipping non-regular file")
          pass
       elif not os.path.isdir(i):
-         files[i] = [os.getcwd(), os.stat(i).st_size, os.stat(i).st_mtime, os.stat(i).st_mode]
+         # put the full path of the file in the dictionnary
+         if os.path.dirname(i) == "":
+            files[os.path.basename(i)] = [os.getcwd(), os.stat(i).st_size, os.stat(i).st_mtime, os.stat(i).st_mode]
+         else:
+            files[os.path.basename(i)] = [os.path.dirname(i), os.stat(i).st_size, os.stat(i).st_mtime, os.stat(i).st_mode]
       else:
          if i[0] == "/":
             directories.append(i)
@@ -40,7 +45,10 @@ def list_files(path, args, recursive=False):
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
             elif os.path.isdir(j):
-               pass
+               if args.dirs:
+                  directories_list.append(os.path.join(os.getcwd(), j))
+               else:
+                  pass
             # if the file is a symbolic link, we skip it and display message "skipping non-regular file"
             elif os.path.islink(j):
                print("skipping non-regular file")
@@ -88,7 +96,7 @@ def list_files(path, args, recursive=False):
                files[j] = [i, os.stat(j).st_size, os.stat(j).st_mtime, os.stat(j).st_mode]
          
          
-   return files
+   return files, directories_list
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description="List files in a directory")

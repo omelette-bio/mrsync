@@ -431,8 +431,8 @@ SEE ALSO
 
 
 BUGS
-       If verbose is enabled, the program won't close until ctrl-c is pressed.
-       If there is a timeout on one side, the other side won't close and end his job.
+       If verbose is enabled, the command line has some problems and you have to press enter to continue when the process is finished.
+       If you want to send a list of files, if it's not on the current working directory, you must type it's full path
 
 
 INTERNAL OPTIONS
