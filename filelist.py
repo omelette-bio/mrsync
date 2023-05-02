@@ -12,7 +12,6 @@ def all_obj_dir(path):
 def list_files(path, args, recursive=False):
    files = {}
    directories = []
-   directories_list = []
    
    for i in path:
       # if the file is a hidden file, we skip it
@@ -54,10 +53,7 @@ def list_files(path, args, recursive=False):
             if j[0] == "." or j[0] == "_" or j[0] == "~":
                pass
             elif os.path.isdir(j):
-               if args.dirs:
-                  directories_list.append(os.path.join(os.getcwd(), j))
-               else:
-                  pass
+               pass
             # if the file is a symbolic link, we skip it and display message "skipping non-regular file"
             elif os.path.islink(j) and not args.quiet:
                print("skipping non-regular file")
@@ -127,4 +123,4 @@ def list_files(path, args, recursive=False):
                files[j] = [i, os.stat(j).st_size, os.stat(j).st_mtime, os.stat(j).st_mode]
          
          
-   return files, directories_list
+   return files

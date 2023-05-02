@@ -47,8 +47,9 @@ fdr2, fdw2 = os.pipe()
 
 
 
+pid_server = os.fork()
 #server process, read on fdr1, write on fdw2
-if os.fork() == 0:
+if pid_server == 0:
    
    # store the state of the pipe
    pipe_state = "on"
@@ -76,7 +77,7 @@ if os.fork() == 0:
    
    # we try to create the list of files at the destination
    try:
-      destination_files, dirs = sender.list_files(".", args)
+      destination_files = sender.list_files(".", args)
    # if it fails, we send a signal to the client and exit
    except:
       print("Error while creating server file list", file=sys.stderr)
@@ -165,17 +166,16 @@ if os.fork() == 0:
             #create the file
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
+         
+            
+            if args.verbose > 0:
+               print(f"Receiving {file}...", file=sys.stderr)
             
             # if the user wants to copy perms and times, we do it
             if args.perms or args.archive:
                if args.verbose > 0:
                   print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
                os.chmod(file, perms)
-
-            
-            if args.verbose > 0:
-               print(f"Receiving {file}...", file=sys.stderr)
-            
             
             #change the standard output to the file
             os.dup2(currentfile, 1)
@@ -206,16 +206,16 @@ if os.fork() == 0:
             file = os.path.join(folder, os.path.basename(file))
             currentfile = os.open(file, os.O_CREAT | os.O_WRONLY)
             
-            # if the user wants to copy perms, we do it
-            if args.perms or args.archive:
-               if args.verbose > 0:
-                  print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
-               os.chmod(file, perms)
             
             
             if args.verbose > 0:
                print(f"Receiving {file}...", file=sys.stderr)
             
+            # if the user wants to copy perms, we do it
+            if args.perms or args.archive:
+               if args.verbose > 0:
+                  print(f"Changing permissions of {file} to {perms}", file=sys.stderr)
+               os.chmod(file, perms)
             
             #change the standard output to the file
             os.dup2(currentfile, 1)
@@ -249,8 +249,10 @@ if os.fork() == 0:
       sys.exit(20)
 
 
+pid_client = os.fork()
+
 #client process, read on fdr2, write on fdw1
-if os.fork() == 0:
+if pid_client == 0:
    
    pipe_state = "on"
    # close the unnecessary pipes
@@ -269,7 +271,7 @@ if os.fork() == 0:
    
    # create the list of files at the source
    try:
-      files, dirs = sender.list_files(args.source, args)
+      files = sender.list_files(args.source, args)
    # if there is an error, we exit
    except:
       print("Error while creating Client's file list, exiting...", file=sys.stderr)
@@ -460,10 +462,7 @@ if os.fork() == 0:
             # and then we close the file
             os.close(sending_file)   
    
-   # beginning of try to create the option --dirs
-   if dirs != []:
-      for i in dirs:
-         message.send(fdw1, "mkdir", i)
+  
    
    # if there are no files to send, we send "end" to the server
    if modify_list == [] and send_list == []:
@@ -482,4 +481,8 @@ if os.fork() == 0:
    else:
       sys.exit(20)
 
-sys.exit(0)
+# take the exit code of the server and client, and return the right exit code
+status = os.waitpid(pid_server, 0)[1]
+status2 = os.waitpid(pid_client, 0)[1]
+# return the highest exit code
+sys.exit(max(status, status2))
