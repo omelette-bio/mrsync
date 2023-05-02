@@ -481,7 +481,7 @@ if pid_client == 0:
    else:
       sys.exit(20)
 
-# take the exit code of the server and client, and return the right exit code
+# take the exit code of the server and client
 status = os.waitpid(pid_server, 0)[1]
 status2 = os.waitpid(pid_client, 0)[1]
 # return the highest exit code
