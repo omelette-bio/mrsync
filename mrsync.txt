@@ -8,16 +8,6 @@ NAME
 SYNOPSIS
        mrsync [OPTION]... SRC [SRC]... DEST
 
-       mrsync [OPTION]... SRC [SRC]... [USER@]HOST:DEST
-
-       mrsync [OPTION]... SRC [SRC]... [USER@]HOST::DEST
-
-       mrsync [OPTION]... SRC
-
-       mrsync [OPTION]... [USER@]HOST:SRC [DEST]
-
-       mrsync [OPTION]... [USER@]HOST::SRC [DEST]
-
 DESCRIPTION
        mrsync is a program that behaves in much the same way that rsync does, but
        has less options. 
@@ -96,36 +86,6 @@ USAGE
        destination don't have a ':' in the name. In this case it behaves  like
        an improved copy command.
 
-CONNECTING TO AN MRSYNC DAEMON
-       It  is  also possible to use mrsync without a remote shell as the trans-
-       port.  In this case you will directly connect to a remote mrsync daemon,
-       typically  using  TCP port 10873.  (This obviously requires the daemon to
-       be running on the remote system, so refer to the STARTING AN MRSYNC DAE-
-       MON TO ACCEPT CONNECTIONS section below for information on that.)
-
-       Using  mrsync  in  this  way is the same as using it with a remote shell
-       except that:
-
-
-       o      you either use a double colon :: instead of a  single  colon  to
-              separate the hostname from the path.
-
-       o      if you specify no local destination then a listing of the speci-
-              fied files on the remote daemon is provided.
-
-       An example that copies all the files in a remote directory named "src":
-
-           mrsync -av host::src /dest
-
-
-STARTING AN MRSYNC DAEMON TO ACCEPT CONNECTIONS
-       In order to connect to an mrsync daemon, the remote system needs to have
-       a daemon already running (or it needs to have configured something like
-       inetd to spawn an mrsync daemon for incoming connections on a particular
-       port).
-
-       If  you're  using  ssh tunneling for the transfer,
-       there is no need to manually start an mrsync daemon.
 
 OPTIONS SUMMARY
        Here is a short summary of the options available in mrsync. Please refer
