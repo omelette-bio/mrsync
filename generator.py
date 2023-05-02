@@ -15,28 +15,30 @@ def compare(a, b, args):
    
    if len(args.source) == 1:
       for i in a:
-         if i in b and not args.ignore_existing:
-            if args.size_only:
-               if a[i][1] != b[i][1]:
-                  list_to_modify.append(i)
-            
-            elif args.ignore_times:
-               list_to_modify.append(i)
-            
-            else:
-               if a[i][2] == b[i][2] and a[i][1] == b[i][1]:
-                  pass
-               # if --update is specified, we compare the modification time of the files, if the destination is older
-               elif args.update:
-                  if a[i][2] > b[i][2]:
+         if i in b:
+            if not args.ignore_existing:
+               if args.size_only:
+                  if a[i][1] != b[i][1]:
                      list_to_modify.append(i)
-               elif a[i][2] != b[i][2] or a[i][1] != b[i][1]:
+               
+               elif args.ignore_times:
                   list_to_modify.append(i)
-               elif args.perms or args.archive:
-                  if a[i][3] != b[i][3]:
+               
+               else:
+                  if a[i][2] == b[i][2] and a[i][1] == b[i][1]:
+                     pass
+                  # if --update is specified, we compare the modification time of the files, if the destination is older
+                  elif args.update:
+                     if a[i][2] > b[i][2]:
+                        list_to_modify.append(i)
+                  elif a[i][2] != b[i][2] or a[i][1] != b[i][1]:
                      list_to_modify.append(i)
-         elif not args.existing:
-            list_to_send.append(i)
+                  elif args.perms or args.archive:
+                     if a[i][3] != b[i][3]:
+                        list_to_modify.append(i)
+         else:
+            if not args.existing:
+               list_to_send.append(i)
       
       for i in b:
          if i not in a:
