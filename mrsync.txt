@@ -353,7 +353,6 @@ SEE ALSO
 BUGS
        If you want to send a list of files, if it's not on the current working directory, you must type it's full path (e.g. don't type ../file, but /home/user/file)
        The exit code is not always correct.
-       The combo --delete --ignore-existing --exists may not work.
 
 
 INTERNAL OPTIONS
