@@ -41,7 +41,7 @@ def parsing():
 # function to call to display the help message
 def help():
    if os.fork() == 0:
-      os.execvp('less', ['less', 'mrsync.txt'])
+      os.execvp('less', ['less', 'README.txt'])
    os.wait()
    
 # function to call to list the contents of a directory
